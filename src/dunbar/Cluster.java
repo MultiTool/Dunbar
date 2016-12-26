@@ -46,6 +46,7 @@ public class Cluster implements IDrawable {
   }
   /* ********************************************************************************* */
   public void ConnectHypercube(int NDims) {
+    Node.MaxNbrs = NDims;
     int Num_Nodes = 1 << NDims;
     Fill_With_Nodes_Plain(Num_Nodes);
     for (int cnt = 0; cnt < Num_Nodes; cnt++) {
@@ -103,6 +104,7 @@ public class Cluster implements IDrawable {
   }
   /* ********************************************************************************* */
   public void Create_Random(int Num_Nodes, int Dunbar_Limit) {
+    Node.MaxNbrs = Dunbar_Limit;
     this.Fill_With_Nodes_Plain(Num_Nodes);
     /*
      next we need to find any two open nodes, and connect them together.
@@ -127,9 +129,26 @@ public class Cluster implements IDrawable {
      back to rolling random problem.
     
      */
+    Node OtherNode;
+    for (int cnt = 0; cnt < Num_Nodes; cnt++) {
+      Node nd = this.NodeList.get(cnt);
+      if (nd.IsOpen()) {
+        OtherNode = nd.FindRandomOther(this);
+        if (OtherNode != null) {
+          nd.ConnectTwoWay(OtherNode);
+        } else {
+          // if we hit here then node
+        }
+      }
+    }
+
     ArrayList<Node> open = new ArrayList<Node>();
     for (int cnt = 0; cnt < Num_Nodes; cnt++) {
       Node nd = this.NodeList.get(cnt);
+      OtherNode = nd.FindRandomOther(this);
+      if (OtherNode != null) {
+        nd.ConnectTwoWay(OtherNode);
+      }
       open.add(nd);
     }
     int dex0, dex1;
@@ -146,6 +165,7 @@ public class Cluster implements IDrawable {
   /* ********************************************************************************* */
   public void Create_Heirarchy(int Num_Nodes, int Dunbar_Limit) {
     int NodeCnt = 0, TierStartCnt, TierCnt;
+    Node.MaxNbrs = Dunbar_Limit;
     int Dun_Small = Dunbar_Limit - 1;
     int Root_Start, Root_End, Child_Start = 0, Child_End;
     int Root_Span, Child_Span;
@@ -334,7 +354,8 @@ public class Cluster implements IDrawable {
     return StillProcessing;
   }
   /* ********************************************************************************* */
-  @Override public void Draw_Me(DrawingContext ParentDC) {
+  @Override
+  public void Draw_Me(DrawingContext ParentDC) {
     Node ndp;
     int cnt;
     DrawingContext ChildDC = new DrawingContext(ParentDC);

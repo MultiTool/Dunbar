@@ -66,6 +66,57 @@ public class Node implements IDrawable {
     return found;
   }
   /* ********************************************************************************* */
+  public boolean IsOpen() {// inefficent test for connectedness
+    return this.DSLinks.size() < Node.MaxNbrs;
+  }
+  /* ********************************************************************************* */
+  public Node FindRandomOther(Cluster cluster) {// inefficent search for other to connect to
+    ArrayList<Node> NodeList = cluster.NodeList;
+    int len = NodeList.size();
+    int RandDex = Base.RandomGenerator.nextInt(len);
+    Node possible, found = null;
+    int cnt = (RandDex + 1) % len;
+    while (cnt != RandDex) {
+      if (cnt >= len) {
+        cnt = 0;
+      }
+      possible = NodeList.get(cnt);
+      if (possible.IsOpen()) {
+        if (possible != this) {
+          if (!possible.IsConnectedTo(this)) {
+            found = possible;
+            break;
+          }
+        }
+      }
+      cnt++;
+    }
+    return found;
+  }
+  /* ********************************************************************************* */
+  public int FindRandomOtherIndex(Cluster cluster) {// inefficent search for other to connect to
+    ArrayList<Node> NodeList = cluster.NodeList;
+    int len = NodeList.size();
+    int RandDex = Base.RandomGenerator.nextInt(len);
+    Node other;
+    int cnt = (RandDex + 1) % len;
+    while (cnt != RandDex) {
+      if (cnt >= len) {
+        cnt = 0;
+      }
+      other = NodeList.get(cnt);
+      if (other.IsOpen()) {
+        if (other != this) {
+          if (!other.IsConnectedTo(this)) {
+            break;
+          }
+        }
+      }
+      cnt++;
+    }
+    return cnt;
+  }
+  /* ********************************************************************************* */
   public Synapse ConnectIn(Node other) {
     Synapse syn = new Synapse();
     syn.DSNode = this;
