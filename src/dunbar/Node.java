@@ -52,6 +52,20 @@ public class Node implements IDrawable {
     route.Distance = 0;
   }
   /* ********************************************************************************* */
+  public boolean IsConnectedTo(Node other) {// inefficent test for connectedness
+    boolean found = false;
+    int len = this.DSLinks.size();
+    Synapse syn;
+    for (int cnt = 0; cnt < len; cnt++) {
+      syn = this.DSLinks.get(cnt);
+      if (syn.DSNode == other) {
+        found = true;
+        break;
+      }
+    }
+    return found;
+  }
+  /* ********************************************************************************* */
   public Synapse ConnectIn(Node other) {
     Synapse syn = new Synapse();
     syn.DSNode = this;
@@ -203,7 +217,8 @@ public class Node implements IDrawable {
     this.YLoc = YPos;
   }
   /* ********************************************************************************* */
-  @Override public void Draw_Me(DrawingContext ParentDC) {
+  @Override
+  public void Draw_Me(DrawingContext ParentDC) {
     int NumDs = DSLinks.size();
     Synapse syn;
     ParentDC.gr.setColor(this.color);
