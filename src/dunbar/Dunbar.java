@@ -18,6 +18,17 @@ public class Dunbar {
     MainGui mg = new MainGui();
     mg.Init();
 
+    /*
+     Next steps:
+     color coded nodes and lines, based on alienation number - done
+     measure inequality - figure out how. maybe take average of all nodes above average, and average of all below, and report difference?  - done in a simple way
+     . Gini coefficient?  or sort nodes, compare average of top half to average of bottom half. 
+     spray of random networks to see range of performance - done
+     genalg breeding of random networks to try for improvement - next 
+     output networks as SVG
+     basket heirarchy
+    
+     */
     //ConnectStuff();
     /*
      new alg:

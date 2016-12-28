@@ -56,7 +56,11 @@ public class MainGui {
     /* ********************************************************************************* */
     public DrawingPanel() {
       if (true) {
-        for (int NDims = 11; NDims < 16; NDims++) {
+        int NDims = 9;
+        RepeatRandom(NDims);
+//        cluster.Create_Random(1 << NDims, NDims);
+//        System.out.print("Create_Random");
+        for (NDims = 4; NDims < 6; NDims++) {//12
           TestDimension(NDims);
         }
       } else if (true) {
@@ -104,27 +108,72 @@ public class MainGui {
       System.out.print("Done.");
     }
     /* ********************************************************************************* */
+    public void RepeatRandom(int NDims) {
+      int NumNodes = 1 << NDims;
+      double Min = Double.MAX_VALUE, Max = Double.MIN_VALUE;
+
+      System.out.print(" NDims:" + NDims + ", NumNodes:" + NumNodes + ",");
+      System.out.println();
+      for (int cnt = 0; cnt < 200; cnt++) {
+        cluster.Create_Random(NumNodes, NDims);
+        this.cluster.Medir();
+        double Alien2 = this.cluster.Get_Adjusted_Alienation_Number();
+        double InEq2 = this.cluster.Measure_Inequality();
+        Min = Math.min(Min, this.cluster.Get_Min_Alienation());
+        Max = Math.max(Max, this.cluster.Get_Max_Alienation());
+        this.cluster.Colorize();
+        System.out.print(" Alien:" + Alien2 + ", InEq:" + InEq2 + ",");
+        System.out.println();
+      }
+    }
+    /* ********************************************************************************* */
     public void TestDimension(int NDims) {
       int NumNodes = 1 << NDims;
       double MaxConnections = NumNodes * (NumNodes - 1);
+      double Min = Double.MAX_VALUE, Max = Double.MIN_VALUE;
 
-      System.out.print(" NDims:" + NDims + " NumNodes:" + NumNodes);
+      System.out.print(" NDims:" + NDims + ", NumNodes:" + NumNodes + ",");
 
-      cluster.ConnectHypercube(NDims);
-      this.cluster.Medir();
-      double SumDist0 = this.cluster.Get_Alienation_Number();
-      System.out.print(" SumDist0:" + SumDist0);
+      if (false) {
+        cluster.ConnectHypercube(NDims);
+        this.cluster.Medir();
+        double Alien0 = this.cluster.Get_Adjusted_Alienation_Number();
+        double InEq0 = this.cluster.Measure_Inequality();
+        Min = Math.min(Min, this.cluster.Get_Min_Alienation());
+        Max = Math.max(Max, this.cluster.Get_Max_Alienation());
+        this.cluster.Colorize();
+        System.out.print(" Alien0:" + Alien0 + ", InEq0:" + InEq0 + ",");
+      }
+      if (true) {
+        cluster.Create_Heirarchy(NumNodes, NDims);
+        this.cluster.Medir();
+        double Alien1 = this.cluster.Get_Adjusted_Alienation_Number();
+        double InEq1 = this.cluster.Measure_Inequality();
+        Min = Math.min(Min, this.cluster.Get_Min_Alienation());
+        Max = Math.max(Max, this.cluster.Get_Max_Alienation());
+        this.cluster.Colorize();
+        System.out.print(" Alien1:" + Alien1 + ", InEq1:" + InEq1 + ",");
+      }
+//      System.out.println(""); System.out.println("Create_Random start");//      System.out.println("Create_Random end");
+      if (true) {
+        cluster.Create_Random(NumNodes, NDims);
+        this.cluster.Medir();
+        double Alien2 = this.cluster.Get_Adjusted_Alienation_Number();
+        double InEq2 = this.cluster.Measure_Inequality();
+        Min = Math.min(Min, this.cluster.Get_Min_Alienation());
+        Max = Math.max(Max, this.cluster.Get_Max_Alienation());
+//        this.cluster.Colorize(Min, Max);
+        this.cluster.Colorize();
+        System.out.print(" Alien2:" + Alien2 + ", InEq2:" + InEq2 + ",");
+      }
+      System.out.println();
 
-      cluster.Create_Heirarchy(NumNodes, NDims);
-      this.cluster.Medir();
-      double SumDist1 = this.cluster.Get_Alienation_Number();
-      System.out.print(" SumDist1:" + SumDist1);
-
-      double Ratio = SumDist0 / SumDist1;
-      double AdjustedScore0 = SumDist0 / MaxConnections;
-      double AdjustedScore1 = SumDist1 / MaxConnections;
-
-      System.out.println(" Ratio:" + Ratio + " AdjustedScore0:" + AdjustedScore0 + " AdjustedScore1:" + AdjustedScore1);
+//      double Ratio = SumDist0 / SumDist1;
+//      double AdjustedScore0 = SumDist0 / MaxConnections;
+//      double AdjustedScore1 = SumDist1 / MaxConnections;
+//      double AdjustedScore2 = SumDist2 / MaxConnections;
+//      System.out.println(" Ratio:" + Ratio);
+      //System.out.println(" Ratio:" + Ratio + " AdjustedScore0:" + AdjustedScore0 + " AdjustedScore1:" + AdjustedScore1 + " AdjustedScore2:" + AdjustedScore2);
     }
     /* ********************************************************************************* */
     public void Medir() {

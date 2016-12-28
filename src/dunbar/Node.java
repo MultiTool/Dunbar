@@ -22,6 +22,7 @@ public class Node implements IDrawable {
   public java.util.HashMap<Integer, RouteEntry> RouteTable = new java.util.HashMap<Integer, RouteEntry>();
   //public LinkedList<BlastPacket> BlastPacketInBuf, BlastPacketOutBuf;
   public ArrayList<BlastPacket> BlastPacketInBuf, BlastPacketOutBuf;
+  public double AlienationNumber = 0;
   public double XLoc = 0, YLoc = 0;
   public int NodeId;
   public static int NodeCounter = 0;
@@ -67,7 +68,16 @@ public class Node implements IDrawable {
   }
   /* ********************************************************************************* */
   public boolean IsOpen() {// inefficent test for connectedness
-    return this.DSLinks.size() < Node.MaxNbrs;
+    return this.DSLinks.size() < Node.MaxNbrs;// if true, not quite full yet
+  }
+  /* ********************************************************************************* */
+  public boolean OverConnectCheck() {
+    if (this.DSLinks.size() > Node.MaxNbrs) {
+      return true;
+    } else if (this.USLinks.size() > Node.MaxNbrs) {
+      return true;
+    }
+    return false;
   }
   /* ********************************************************************************* */
   public Node FindRandomOther(Cluster cluster) {// inefficent search for other to connect to
@@ -132,6 +142,29 @@ public class Node implements IDrawable {
     MySyn.MyMirror = YouSyn;
     YouSyn.MyMirror = MySyn;
   }
+  /* ********************************************************************************* */
+  public void Disconnect(Node other) {// rough draft
+    Synapse syn;
+    int loc = -1;
+    for (int cnt = 0; cnt < this.USLinks.size(); cnt++) {
+      syn = this.USLinks.get(cnt);
+      if (syn.USNode == other) {
+        loc = cnt;
+        break;
+      }
+    }
+    this.USLinks.remove(loc);
+
+    loc = -1;
+    for (int cnt = 0; cnt < other.DSLinks.size(); cnt++) {
+      syn = other.DSLinks.get(cnt);
+      if (syn.DSNode == this) {
+        loc = cnt;
+        break;
+      }
+    }
+    other.DSLinks.remove(loc);
+  }
   /* ********************************************************************** */
   double ReportStats() {
     double MaxDistance = 0, SumDistance = 0;// total alienation number
@@ -155,18 +188,21 @@ public class Node implements IDrawable {
     //return MaxDistance;
   }
   /* ********************************************************************** */
-  double Get_Alienation_Number() {
+  public double Get_Adjusted_Alienation_Number(double ClusterSize) {//Assign_Alienation_Number
+    this.AlienationNumber = this.Get_Alienation_Number() / ClusterSize;
+    return this.AlienationNumber;
+  }
+  /* ********************************************************************** */
+  public double Get_Alienation_Number() {
     double SumDistance = 0;// total alienation number
     RouteEntry route;
-    int WorldSize = 0;
     Iterator it = this.RouteTable.entrySet().iterator();
     while (it.hasNext()) {
       Map.Entry pair = (Map.Entry) it.next();
       route = (RouteEntry) pair.getValue();
       SumDistance += route.Distance;
-      WorldSize++;
     }
-    //System.out.println("WorldSize:" + WorldSize);
+    this.AlienationNumber = SumDistance;
     return SumDistance;
   }
   /* ********************************************************************** */
@@ -268,13 +304,12 @@ public class Node implements IDrawable {
     this.YLoc = YPos;
   }
   /* ********************************************************************************* */
-  @Override
-  public void Draw_Me(DrawingContext ParentDC) {
+  @Override public void Draw_Me(DrawingContext ParentDC) {
     int NumDs = DSLinks.size();
     Synapse syn;
     ParentDC.gr.setColor(this.color);
     int Radius = 2, Diameter = Radius * 2;
-    ParentDC.gr.drawOval(((int) this.XLoc) - Radius, ((int) this.YLoc) - Radius, Diameter, Diameter);
+    ParentDC.gr.fillOval(((int) this.XLoc) - Radius, ((int) this.YLoc) - Radius, Diameter, Diameter);
     for (int scnt = 0; scnt < NumDs; scnt++) {
       syn = this.DSLinks.get(scnt);
       syn.Draw_Me(ParentDC);

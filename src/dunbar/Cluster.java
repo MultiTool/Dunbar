@@ -1,6 +1,8 @@
 package dunbar;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 
 /**
@@ -44,6 +46,21 @@ public class Cluster implements IDrawable {
       ndp.YLoc = YOffset + Math.sin(Angle) * Radius;
     }
   }
+  /* ********************************************************************** */
+  void Make_Circular(double Radius) {
+    Node ndp;
+    int ncnt;
+    double XOffset = Radius * 2, YOffset = Radius * 2;
+    double FractAngle = 0.0, Angle;
+    int Num_Nodes = this.NodeList.size();
+    for (ncnt = 0; ncnt < Num_Nodes; ncnt++) {
+      ndp = this.NodeList.get(ncnt);
+      FractAngle = ((double) ncnt) / ((double) Num_Nodes);
+      Angle = FractAngle * Math.PI * 2.0;
+      ndp.XLoc = XOffset + Math.cos(Angle) * Radius;
+      ndp.YLoc = YOffset + Math.sin(Angle) * Radius;
+    }
+  }
   /* ********************************************************************************* */
   public void ConnectHypercube(int NDims) {
     Node.MaxNbrs = NDims;
@@ -57,6 +74,7 @@ public class Cluster implements IDrawable {
         me.ConnectIn(you);//.ConnectTwoWay(you);
       }
     }
+    this.Make_Circular(120.0);
   }
   /* ********************************************************************************* */
   public void ConnectInnerSparse(int ConnectionsPerNode) {// Dunbar's number
@@ -129,38 +147,53 @@ public class Cluster implements IDrawable {
      back to rolling random problem.
     
      */
-    Node OtherNode;
-    for (int cnt = 0; cnt < Num_Nodes; cnt++) {
-      Node nd = this.NodeList.get(cnt);
-      if (nd.IsOpen()) {
-        OtherNode = nd.FindRandomOther(this);
-        if (OtherNode != null) {
-          nd.ConnectTwoWay(OtherNode);
-        } else {
-          // if we hit here then node
+    boolean Depleted;// we are Depleted if we've run out of things to connect to each other
+    int OpenCnt;
+    Node OtherNode;// easy, inefficient way
+    while (true) {
+      Depleted = true;
+      OpenCnt = 0;
+      for (int cnt = 0; cnt < Num_Nodes; cnt++) {
+        Node nd = this.NodeList.get(cnt);
+        if (nd.IsOpen()) {
+          OpenCnt++;
+          OtherNode = nd.FindRandomOther(this);
+          if (OtherNode != null) {
+            nd.ConnectTwoWay(OtherNode);
+            Depleted = false;
+          }
         }
       }
-    }
-
-    ArrayList<Node> open = new ArrayList<Node>();
-    for (int cnt = 0; cnt < Num_Nodes; cnt++) {
-      Node nd = this.NodeList.get(cnt);
-      OtherNode = nd.FindRandomOther(this);
-      if (OtherNode != null) {
-        nd.ConnectTwoWay(OtherNode);
+      if (Depleted) {
+        break;
       }
-      open.add(nd);
     }
-    int dex0, dex1;
-    dex0 = Base.RandomGenerator.nextInt(open.size());
-    dex1 = dex0;
-    while (dex1 != dex0) {// wrong they still might already connect
-      dex1 = Base.RandomGenerator.nextInt(open.size());
+    if (OpenCnt > 0) {
+      //System.out.println("SomeAreOpen");
     }
-    Node nd0 = open.get(dex0);
-    Node nd1 = open.get(dex1);
-    nd0.ConnectTwoWay(nd1);
-
+    boolean broken = this.OverConnectCheck();
+    if (broken) {
+      System.out.println("** OverConnected!!!");
+    }
+//    ArrayList<Node> open = new ArrayList<Node>();
+//    for (int cnt = 0; cnt < Num_Nodes; cnt++) {
+//      Node nd = this.NodeList.get(cnt);
+//      OtherNode = nd.FindRandomOther(this);
+//      if (OtherNode != null) {
+//        nd.ConnectTwoWay(OtherNode);
+//      }
+//      open.add(nd);
+//    }
+//    int dex0, dex1;
+//    dex0 = Base.RandomGenerator.nextInt(open.size());
+//    dex1 = dex0;
+//    while (dex1 != dex0) {// wrong they still might already connect
+//      dex1 = Base.RandomGenerator.nextInt(open.size());
+//    }
+//    Node nd0 = open.get(dex0);
+//    Node nd1 = open.get(dex1);
+//    nd0.ConnectTwoWay(nd1);
+    this.Make_Circular(120.0);
   }
   /* ********************************************************************************* */
   public void Create_Heirarchy(int Num_Nodes, int Dunbar_Limit) {
@@ -256,6 +289,13 @@ public class Cluster implements IDrawable {
         TierCnt++;
       }
     }
+    if (false) {
+      // to do: make a basket heirarchy. all childless children must connect laterally.
+      for (int cnt = 0; cnt < ChildBuf.size(); cnt++) {
+        ChildBuf.get(cnt);
+      }
+      // more realistic would be a cul-de-sac basket heirarchy, where only children of the same parent can connect together. no inter-departmental connections.
+    }
     System.out.print("");
     if (false) {
       root = nodes.get(0);
@@ -305,6 +345,21 @@ public class Cluster implements IDrawable {
 //    System.out.println("MaxDist:" + SumDist);
   }
   /* ********************************************************************** */
+  public double Get_Adjusted_Alienation_Number() {
+    Node ndp;
+    double SumDistance = 0;// total alienation number
+    int siz = this.NodeList.size();
+    for (int cnt = 0; cnt < siz; cnt++) {
+      ndp = this.NodeList.get(cnt);
+      if (ndp.RouteTable.size() < this.NodeList.size()) {
+        SumDistance += Double.POSITIVE_INFINITY;// If any node is unreachable from any other node, distance (alienation) is infinite.
+      } else {
+        SumDistance += ndp.Get_Adjusted_Alienation_Number(siz - 1);
+      }
+    }
+    return SumDistance / (double) siz;
+  }
+  /* ********************************************************************** */
   public double Get_Alienation_Number() {
     Node ndp;
     double SumDistance = 0;// total alienation number
@@ -318,6 +373,89 @@ public class Cluster implements IDrawable {
       }
     }
     return SumDistance;
+  }
+  /* ********************************************************************************* */
+  public boolean OverConnectCheck() {
+    Node ndp;
+    int siz = this.NodeList.size();
+    for (int cnt = 0; cnt < siz; cnt++) {
+      ndp = this.NodeList.get(cnt);
+      if (ndp.OverConnectCheck()) {
+        return true;
+      }
+    }
+    return false;
+  }
+  /* ********************************************************************************* */
+  public void Sort() {
+    Collections.sort(this.NodeList, new Comparator<Node>() {
+      @Override public int compare(Node nd0, Node nd1) {
+        return Double.compare(nd0.AlienationNumber, nd1.AlienationNumber);
+      }
+    });
+  }
+  /* ********************************************************************************* */
+  public double Measure_Inequality() {
+    this.Sort();
+    int siz = this.NodeList.size();
+    int half = siz / 2;
+    int cnt = 0;
+    double Sum0 = 0, Sum1 = 0;
+    while (cnt < half) {
+      Sum0 += this.NodeList.get(cnt).AlienationNumber;
+      cnt++;
+    }
+    Sum0 /= (double) half;
+    while (cnt < siz) {
+      Sum1 += this.NodeList.get(cnt).AlienationNumber;
+      cnt++;
+    }
+    Sum1 /= (double) (siz - half);
+    double Dist = Sum1 - Sum0;
+    return Dist;
+  }
+  /* ********************************************************************************* */
+  public double Get_Min_Alienation() {
+    int siz = this.NodeList.size();
+    double Alienation, Min = Double.POSITIVE_INFINITY;
+    for (int cnt = 0; cnt < siz; cnt++) {
+      Alienation = this.NodeList.get(cnt).AlienationNumber;
+      if (Min > Alienation) {
+        Min = Alienation;
+      }
+    }
+    return Min;
+  }
+  /* ********************************************************************************* */
+  public double Get_Max_Alienation() {
+    int siz = this.NodeList.size();
+    double Alienation, Max = -1;
+    for (int cnt = 0; cnt < siz; cnt++) {
+      Alienation = this.NodeList.get(cnt).AlienationNumber;
+      if (Max < Alienation) {
+        Max = Alienation;
+      }
+    }
+    return Max;
+  }
+  /* ********************************************************************************* */
+  public void Colorize(double Min, double Max) {
+    if (Min == Max) {
+      Max += Base.Fudge;
+    }
+    double Range = Max - Min;
+    int siz = this.NodeList.size();
+    Node nd;
+    for (int cnt = 0; cnt < siz; cnt++) {
+      nd = this.NodeList.get(cnt);
+      nd.color = Base.ToRainbow(1.0 - ((nd.AlienationNumber - Min) / Range));
+    }
+  }
+  /* ********************************************************************************* */
+  public void Colorize() {
+    double Min = this.Get_Min_Alienation();
+    double Max = this.Get_Max_Alienation();
+    this.Colorize(Min, Max);
   }
   /* ********************************************************************** */
   void SendFirstPacket() {
@@ -354,8 +492,7 @@ public class Cluster implements IDrawable {
     return StillProcessing;
   }
   /* ********************************************************************************* */
-  @Override
-  public void Draw_Me(DrawingContext ParentDC) {
+  @Override public void Draw_Me(DrawingContext ParentDC) {
     Node ndp;
     int cnt;
     DrawingContext ChildDC = new DrawingContext(ParentDC);
