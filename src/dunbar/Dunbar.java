@@ -21,13 +21,16 @@ public class Dunbar {
     /*
      Next steps:
      color coded nodes and lines, based on alienation number - done
+     thicker lines - done
      measure inequality - figure out how. maybe take average of all nodes above average, and average of all below, and report difference?  - done in a simple way
      . Gini coefficient?  or sort nodes, compare average of top half to average of bottom half. 
      spray of random networks to see range of performance - done
      genalg breeding of random networks to try for improvement - next 
      output networks as SVG
      basket heirarchy
-    
+     plot cube, heirarchy and random networks with same color scale to make relative alienation for each node and network visible. 
+     use spring physics to self-sort random networks
+     
      */
     //ConnectStuff();
     /*

@@ -30,7 +30,7 @@ public class Node implements IDrawable {
   public static Random RandomGenerator = new Random();
   /* ********************************************************************** */
   Node() {
-    color = ToRainbow(RandomGenerator.nextDouble());
+    color = Base.ToRainbow(RandomGenerator.nextDouble());
     this.NodeId = NodeCounter++;
     this.BlastPacketInBuf = new ArrayList<BlastPacket>();
     this.BlastPacketOutBuf = new ArrayList<BlastPacket>();
@@ -308,21 +308,11 @@ public class Node implements IDrawable {
     int NumDs = DSLinks.size();
     Synapse syn;
     ParentDC.gr.setColor(this.color);
-    int Radius = 2, Diameter = Radius * 2;
+    int Radius = 5, Diameter = Radius * 2;
     ParentDC.gr.fillOval(((int) this.XLoc) - Radius, ((int) this.YLoc) - Radius, Diameter, Diameter);
     for (int scnt = 0; scnt < NumDs; scnt++) {
       syn = this.DSLinks.get(scnt);
       syn.Draw_Me(ParentDC);
-    }
-  }
-  /* ********************************************************************************* */
-  public static Color ToRainbow(double Fraction) {
-    if (Fraction < 0.5) {
-      Fraction *= 2;
-      return new Color((float) (1.0 - Fraction), (float) Fraction, 0);
-    } else {
-      Fraction = Math.min((Fraction - 0.5) * 2, 1.0);
-      return new Color(0, (float) (1.0 - Fraction), (float) Fraction);
     }
   }
 }

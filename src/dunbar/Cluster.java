@@ -47,10 +47,10 @@ public class Cluster implements IDrawable {
     }
   }
   /* ********************************************************************** */
-  void Make_Circular(double Radius) {
+  void Make_Circular(double XOrg, double YOrg, double Radius) {
     Node ndp;
     int ncnt;
-    double XOffset = Radius * 2, YOffset = Radius * 2;
+    double XOffset = XOrg + Radius * 2, YOffset = YOrg + Radius * 2;
     double FractAngle = 0.0, Angle;
     int Num_Nodes = this.NodeList.size();
     for (ncnt = 0; ncnt < Num_Nodes; ncnt++) {
@@ -74,7 +74,7 @@ public class Cluster implements IDrawable {
         me.ConnectIn(you);//.ConnectTwoWay(you);
       }
     }
-    this.Make_Circular(120.0);
+    this.Make_Circular(0, 200, 120.0);
   }
   /* ********************************************************************************* */
   public void ConnectInnerSparse(int ConnectionsPerNode) {// Dunbar's number
@@ -193,7 +193,7 @@ public class Cluster implements IDrawable {
 //    Node nd0 = open.get(dex0);
 //    Node nd1 = open.get(dex1);
 //    nd0.ConnectTwoWay(nd1);
-    this.Make_Circular(120.0);
+    this.Make_Circular(0, 450, 120.0);
   }
   /* ********************************************************************************* */
   public void Create_Heirarchy(int Num_Nodes, int Dunbar_Limit) {
@@ -203,7 +203,8 @@ public class Cluster implements IDrawable {
     int Root_Start, Root_End, Child_Start = 0, Child_End;
     int Root_Span, Child_Span;
     int ChildCnt = 0;
-    double XOrg, YOrg, XLoc, YLoc, XDif = 20, YDif = 20;
+    double XOrg, YOrg, XLoc, YLoc, XDif = 40, YDif = 80, XLocPrev;
+    double ChildMax, ChildWdt, Estimate;
     Node nd, root, child;
     ArrayList<Node> nodes = new ArrayList<Node>();
     this.NodeList.clear();
@@ -234,34 +235,51 @@ public class Cluster implements IDrawable {
     ArrayList<Node> ChildBuf = new ArrayList<Node>();
     if (true) {
       TierCnt = 0;
-      XOrg = 30;
+      XOrg = 700;//500;//1500;
       YOrg = 30;
       YLoc = YOrg;
-      // first tier
-      XLoc = XOrg;
-      root = new Node();
-      this.NodeList.add(root);
-      ParentBuf.add(root);// root node
-      root.AssignLoc(XLoc, YLoc);
-      NodeCnt++;
-      TierCnt++;
-      // second tier
-      XLoc = XOrg;
-      YLoc += YDif;
-      for (int cnt = 0; cnt < Dunbar_Limit; cnt++) {// first tier, root does not point up, so has extra connection for children
-        child = new Node();
-        this.NodeList.add(child);
-        ChildBuf.add(child);
-        child.AssignLoc(XLoc, YLoc);
-        XLoc += XDif;
-        root.ConnectTwoWay(child);
+      {// first tier
+        ChildMax = 1;
+        ChildWdt = 0;
+        XLoc = XOrg;
+        root = new Node();
+        this.NodeList.add(root);
+        ParentBuf.add(root);// root node
+        root.AssignLoc(XLoc, YLoc);
         NodeCnt++;
+        TierCnt++;
       }
-      ParentBuf = ChildBuf;// child row becomes parent row
-      TierCnt++;
+      {// second tier
+        ChildMax = Dunbar_Limit;
+        Estimate = NodeCnt + ChildMax;
+        ChildWdt = (ChildMax - 1) * XDif;
+        XLoc = XOrg - (ChildWdt / 2);
+        XLocPrev = XLoc;
+        YLoc += YDif;
+        for (int cnt = 0; cnt < Dunbar_Limit; cnt++) {// first tier, root does not point up, so has extra connection for children
+          child = new Node();
+          this.NodeList.add(child);
+          ChildBuf.add(child);
+          child.AssignLoc(XLoc, YLoc);
+          XLoc += XDif;
+          root.ConnectTwoWay(child);
+          NodeCnt++;
+        }
+        ParentBuf = ChildBuf;// child row becomes parent row
+        TierCnt++;
+      }
       while (NodeCnt < Num_Nodes) {// loop tiercnt
         // Nth tier
-        XLoc = XOrg;
+        ChildMax = Dun_Small * ChildMax;
+        Estimate = NodeCnt + ChildMax;
+        if (Estimate > Num_Nodes) {
+          ChildMax = Num_Nodes - NodeCnt;
+          XLoc = XLocPrev;
+        } else {
+          ChildWdt = (ChildMax - 1) * XDif;
+          XLoc = XOrg - (ChildWdt / 2);
+          XLocPrev = XLoc;
+        }
         YLoc += YDif;
         ChildBuf = new ArrayList<Node>();
         TierStartCnt = NodeCnt - 0;
@@ -448,7 +466,11 @@ public class Cluster implements IDrawable {
     Node nd;
     for (int cnt = 0; cnt < siz; cnt++) {
       nd = this.NodeList.get(cnt);
-      nd.color = Base.ToRainbow(1.0 - ((nd.AlienationNumber - Min) / Range));
+      //nd.color = Base.ToRainbow(1.0 - ((nd.AlienationNumber - Min) / Range));
+      //nd.color = Base.ToGreenHeat(1.0 - ((nd.AlienationNumber - Min) / Range));
+      //nd.color = Base.ToHeat(1.0 - ((nd.AlienationNumber - Min) / Range));
+      nd.color = Base.ToBlackBody(1.0 - ((nd.AlienationNumber - Min) / Range));
+      //nd.color = Base.ToBlackBody(((nd.AlienationNumber - Min) / Range));
     }
   }
   /* ********************************************************************************* */

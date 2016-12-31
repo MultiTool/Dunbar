@@ -1,5 +1,6 @@
 package dunbar;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.GradientPaint;
 
@@ -26,6 +27,7 @@ public class Synapse implements IDrawable {
     GradientPaint gradient = new GradientPaint(x0, y0, this.USNode.color, x1, y1, this.DSNode.color);
     ParentDC.gr.setPaint(gradient);
     //ParentDC.gr.setColor(Color.black);
+    ParentDC.gr.setStroke(new BasicStroke(6));
     ParentDC.gr.drawLine(x0, y0, x1, y1);
   }
 }
