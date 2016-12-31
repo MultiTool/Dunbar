@@ -1,6 +1,8 @@
 package dunbar;
 
 import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.GradientPaint;
 import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
@@ -24,6 +26,7 @@ public class Node implements IDrawable {
   public ArrayList<BlastPacket> BlastPacketInBuf, BlastPacketOutBuf;
   public double AlienationNumber = 0;
   public double XLoc = 0, YLoc = 0;
+  int Radius = 10, Diameter = Radius * 2;
   public int NodeId;
   public static int NodeCounter = 0;
   public Color color;
@@ -41,13 +44,13 @@ public class Node implements IDrawable {
   }
   /* ********************************************************************************* */
   public void Pack_Route_Table(Cluster Network) {
-    RouteEntry route;
+    RouteEntry route;// if the network is split into two or more islands, the node will at least know that some other nodes are infinitely far away
     Node other;
     int len = Network.NodeList.size();
     for (int cnt = 0; cnt < len; cnt++) {
       other = Network.NodeList.get(cnt);
       route = new RouteEntry(other, Double.POSITIVE_INFINITY);
-      this.RouteTable.put(this.NodeId, route);
+      this.RouteTable.put(other.NodeId, route);
     }
     route = this.RouteTable.get(this.NodeId);// make route to self be distance 0 from the start.
     route.Distance = 0;
@@ -85,11 +88,8 @@ public class Node implements IDrawable {
     int len = NodeList.size();
     int RandDex = Base.RandomGenerator.nextInt(len);
     Node possible, found = null;
-    int cnt = (RandDex + 1) % len;
-    while (cnt != RandDex) {
-      if (cnt >= len) {
-        cnt = 0;
-      }
+    int cnt = RandDex;
+    while (true) {
       possible = NodeList.get(cnt);
       if (possible.IsOpen()) {
         if (possible != this) {
@@ -100,6 +100,12 @@ public class Node implements IDrawable {
         }
       }
       cnt++;
+      if (cnt >= len) {
+        cnt = 0;
+      }
+      if (cnt == RandDex) {
+        break;
+      }
     }
     return found;
   }
@@ -288,7 +294,7 @@ public class Node implements IDrawable {
       
       
    */
-  /* ********************************************************************** */
+ /* ********************************************************************** */
   void Push_Fire() {
     /*
      everybody at once:
@@ -305,14 +311,64 @@ public class Node implements IDrawable {
   }
   /* ********************************************************************************* */
   @Override public void Draw_Me(DrawingContext ParentDC) {
+    Graphics2D g2d = ParentDC.gr;
     int NumDs = DSLinks.size();
     Synapse syn;
-    ParentDC.gr.setColor(this.color);
-    int Radius = 5, Diameter = Radius * 2;
-    ParentDC.gr.fillOval(((int) this.XLoc) - Radius, ((int) this.YLoc) - Radius, Diameter, Diameter);
+    for (int scnt = 0; scnt < NumDs; scnt++) {
+      syn = this.DSLinks.get(scnt);
+      syn.Draw_Me(ParentDC);
+    }
+    g2d.setColor(this.color);
+    g2d.fillOval(((int) this.XLoc) - Radius, ((int) this.YLoc) - Radius, Diameter, Diameter);
+
+    String txt = String.format("%1$.1f", this.AlienationNumber);
+    g2d.setColor(Color.green);
+
+    //Font font = ParentDC.gr.getFont();
+    g2d.setFont(g2d.getFont().deriveFont(Font.BOLD));
+    g2d.setColor(Color.white);
+    DrawCenteredString(g2d, (int) this.XLoc, (int) this.YLoc, txt);
+    g2d.setFont(g2d.getFont().deriveFont(Font.PLAIN));
+    g2d.setColor(Color.green);
+    DrawCenteredString(g2d, (int) this.XLoc, (int) this.YLoc, txt);
+    //ParentDC.gr.drawString(txt, (float) this.XLoc, (float) this.YLoc);
+  }
+  /* ********************************************************************************* */
+  public void Draw_Body(DrawingContext ParentDC) {
+    Graphics2D g2d = ParentDC.gr;
+    g2d.setColor(this.color);
+    g2d.fillOval(((int) this.XLoc) - Radius, ((int) this.YLoc) - Radius, Diameter, Diameter);
+    String txt = String.format("%1$.1f", this.AlienationNumber);
+    g2d.setColor(Color.green);
+    //Font font = ParentDC.gr.getFont();
+    g2d.setFont(g2d.getFont().deriveFont(Font.BOLD));
+    g2d.setColor(Color.white);
+    DrawCenteredString(g2d, (int) this.XLoc, (int) this.YLoc, txt);
+    g2d.setFont(g2d.getFont().deriveFont(Font.PLAIN));
+    g2d.setColor(Color.green);
+    DrawCenteredString(g2d, (int) this.XLoc, (int) this.YLoc, txt);
+    //ParentDC.gr.drawString(txt, (float) this.XLoc, (float) this.YLoc);
+  }
+  /* ********************************************************************************* */
+  public void Draw_Connections(DrawingContext ParentDC) {
+    int NumDs = DSLinks.size();
+    Synapse syn;
     for (int scnt = 0; scnt < NumDs; scnt++) {
       syn = this.DSLinks.get(scnt);
       syn.Draw_Me(ParentDC);
     }
   }
+  /* ********************************************************************************* */
+  public void DrawCenteredString(Graphics2D g2d, int XCtr, int YCtr, String text) {
+    // Get the FontMetrics  http://stackoverflow.com/questions/27706197/how-can-i-center-graphics-drawstring-in-java
+    Font font = g2d.getFont();
+    FontMetrics metrics = g2d.getFontMetrics(font);//font
+    // Determine the X coordinate for the text
+    int x = XCtr - (metrics.stringWidth(text)) / 2;
+    // Determine the Y coordinate for the text (note we add the ascent, as in java 2d 0 is top of the screen)
+    int y = YCtr - ((metrics.getHeight()) / 2) + metrics.getAscent();
+    // Draw the String
+    g2d.drawString(text, x, y);
+  }
+
 }

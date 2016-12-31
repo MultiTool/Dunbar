@@ -19,6 +19,15 @@ public class Cluster implements IDrawable {
     this();
     Fill_With_Nodes(Num_Nodes);
   }
+  /* ********************************************************************************* */
+  public void Pack_Route_Table() {
+    Node ndp;
+    int Num_Nodes = this.NodeList.size();
+    for (int ncnt = 0; ncnt < Num_Nodes; ncnt++) {
+      ndp = this.NodeList.get(ncnt);
+      ndp.Pack_Route_Table(this);
+    }
+  }
   /* ********************************************************************** */
   void Fill_With_Nodes_Plain(int Num_Nodes) {
     Node ndp;
@@ -28,6 +37,7 @@ public class Cluster implements IDrawable {
       ndp = new Node();
       this.NodeList.add(ndp);
     }
+    this.Pack_Route_Table();
   }
   /* ********************************************************************** */
   void Fill_With_Nodes(int Num_Nodes) {
@@ -45,6 +55,7 @@ public class Cluster implements IDrawable {
       ndp.XLoc = XOffset + Math.cos(Angle) * Radius;
       ndp.YLoc = YOffset + Math.sin(Angle) * Radius;
     }
+    this.Pack_Route_Table();
   }
   /* ********************************************************************** */
   void Make_Circular(double XOrg, double YOrg, double Radius) {
@@ -193,7 +204,7 @@ public class Cluster implements IDrawable {
 //    Node nd0 = open.get(dex0);
 //    Node nd1 = open.get(dex1);
 //    nd0.ConnectTwoWay(nd1);
-    this.Make_Circular(0, 450, 120.0);
+    this.Make_Circular(0, 480, 120.0);
   }
   /* ********************************************************************************* */
   public void Create_Heirarchy(int Num_Nodes, int Dunbar_Limit) {
@@ -331,6 +342,7 @@ public class Cluster implements IDrawable {
         NodeCnt++;
       }
     }
+    this.Pack_Route_Table();
   }
   /* ********************************************************************************* */
   public void ConnectInput(Cluster other) {// connect all to all
@@ -521,7 +533,11 @@ public class Cluster implements IDrawable {
     int siz = this.NodeList.size();
     for (cnt = 0; cnt < siz; cnt++) {
       ndp = this.NodeList.get(cnt);
-      ndp.Draw_Me(ChildDC);
+      ndp.Draw_Connections(ChildDC);
+    }
+    for (cnt = 0; cnt < siz; cnt++) {
+      ndp = this.NodeList.get(cnt);
+      ndp.Draw_Body(ChildDC);
     }
   }
 }

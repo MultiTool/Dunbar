@@ -16,6 +16,7 @@ import javax.swing.JFrame;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
@@ -66,11 +67,12 @@ public class MainGui {
       if (true) {
         int NDims = 9;
         if (false) {
+          NDims = 4;
           RepeatRandom(NDims);
         }
 //        cluster.Create_Random(1 << NDims, NDims);
 //        System.out.print("Create_Random");
-        for (NDims = 4; NDims < 6; NDims++) {//12
+        for (NDims = 5; NDims < 6; NDims++) {//12
           TestDimension(NDims);
         }
       } else {
@@ -98,12 +100,17 @@ public class MainGui {
       System.out.print(" NDims:" + NDims + ", NumNodes:" + NumNodes + ",");
       System.out.println();
       for (int cnt = 0; cnt < 200; cnt++) {
+        //System.out.println("cluster0.Create_Random");
         cluster0.Create_Random(NumNodes, NDims);
+        //System.out.println("cluster0.Medir");
         this.cluster0.Medir();
+        //System.out.println("cluster0.Get_Adjusted_Alienation_Number");
         double Alien2 = this.cluster0.Get_Adjusted_Alienation_Number();
         double InEq2 = this.cluster0.Measure_Inequality();
+        //System.out.println("cluster0.Get_Min_Alienation");
         Min = Math.min(Min, this.cluster0.Get_Min_Alienation());
         Max = Math.max(Max, this.cluster0.Get_Max_Alienation());
+        //System.out.println("cluster0.Colorize");
         this.cluster0.Colorize();
         System.out.print(" Alien:" + Alien2 + ", InEq:" + InEq2 + ",");
         System.out.println();
@@ -204,11 +211,16 @@ public class MainGui {
     }
     /* ********************************************************************************* */
     public void save2() {//http://www.java2s.com/Code/Java/2D-Graphics-GUI/SavingaGeneratedGraphictoaPNGorJPEGFile.htm
-      int width = 1300;
-      int height = 1000;
+      int scale = 4;
+      int width = 1300 * scale;
+      int height = 1000 * scale;
 
       BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
       Graphics2D g2d = bufferedImage.createGraphics();
+//      AffineTransform originalTransform = g2d.getTransform();
+//      g2d.transform(originalTransform);
+      g2d.scale(scale, scale);
+
       this.Draw_Me(g2d);
 //      g2d.setColor(Color.white);
 //      g2d.fillRect(0, 0, width, height);
@@ -221,8 +233,8 @@ public class MainGui {
         File file = new File("newimage.png");
         ImageIO.write(rendImage, "png", file);
 
-        file = new File("newimage.jpg");
-        ImageIO.write(rendImage, "jpg", file);
+//        file = new File("newimage.jpg");
+//        ImageIO.write(rendImage, "jpg", file);
       } catch (IOException e) {
         e.printStackTrace();
       }
