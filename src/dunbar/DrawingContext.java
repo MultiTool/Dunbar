@@ -13,6 +13,7 @@ import java.awt.geom.Point2D;
 public final class DrawingContext {// Let's be final until we can't anymore
   public Graphics2D gr;
   public int RecurseDepth;
+  public double XOrg = 0, YOrg = 0;
   /* ********************************************************************************* */
   public DrawingContext() {
     this.RecurseDepth = 0;
@@ -26,5 +27,7 @@ public final class DrawingContext {// Let's be final until we can't anymore
   public DrawingContext(DrawingContext Fresh_Parent) {
     this.gr = Fresh_Parent.gr;
     this.RecurseDepth = Fresh_Parent.RecurseDepth + 1;
+    this.XOrg = Fresh_Parent.XOrg;
+    this.YOrg = Fresh_Parent.YOrg;
   }
 }

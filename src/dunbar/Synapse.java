@@ -22,10 +22,10 @@ public class Synapse implements IDrawable {
     int x0, y0, x1, y1, Radius0, Radius1;
     double dx = this.DSNode.XLoc - this.USNode.XLoc;
     double dy = this.DSNode.YLoc - this.USNode.YLoc;
-    x0 = (int) this.USNode.XLoc;
-    y0 = (int) this.USNode.YLoc;
-    x1 = (int) this.DSNode.XLoc;
-    y1 = (int) this.DSNode.YLoc;
+    x0 = (int) (ParentDC.XOrg + this.USNode.XLoc);
+    y0 = (int) (ParentDC.YOrg + this.USNode.YLoc);
+    x1 = (int) (ParentDC.XOrg + this.DSNode.XLoc);
+    y1 = (int) (ParentDC.YOrg + this.DSNode.YLoc);
     Radius0 = (int) this.USNode.Radius;
     Radius1 = (int) this.DSNode.Radius;
     double dist = Math.hypot(dx, dy);

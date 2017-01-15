@@ -1,5 +1,7 @@
 package dunbar;
 
+import java.awt.Color;
+import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -11,6 +13,9 @@ import java.util.HashMap;
  */
 public class Cluster implements IDrawable {
   public ArrayList<Node> NodeList = new ArrayList<Node>();
+  public double AlienationNumber, Inequality;
+  public double XOrg = 0, YOrg = 0;
+  public boolean ReadyToDraw = false;
   /* ********************************************************************** */
   Cluster() {
   }
@@ -28,8 +33,20 @@ public class Cluster implements IDrawable {
       ndp.Pack_Route_Table(this);
     }
   }
+  /* ********************************************************************************* */
+  public void Clear_Scores() {
+    Node ndp;
+    int Num_Nodes = this.NodeList.size();
+    for (int ncnt = 0; ncnt < Num_Nodes; ncnt++) {
+      ndp = this.NodeList.get(ncnt);
+      ndp.Clear_Scores();
+    }
+    this.AlienationNumber = Double.POSITIVE_INFINITY;
+    this.Inequality = Double.POSITIVE_INFINITY;
+  }
   /* ********************************************************************** */
   void Fill_With_Nodes_Plain(int Num_Nodes) {
+    this.ReadyToDraw = false;
     Node ndp;
     int ncnt;
     this.NodeList.clear();
@@ -41,6 +58,7 @@ public class Cluster implements IDrawable {
   }
   /* ********************************************************************** */
   void Fill_With_Nodes(int Num_Nodes) {
+    this.ReadyToDraw = false;
     Node ndp;
     int ncnt;
     this.NodeList.clear();
@@ -61,7 +79,7 @@ public class Cluster implements IDrawable {
   void Make_Circular(double XOrg, double YOrg, double Radius) {
     Node ndp;
     int ncnt;
-    double XOffset = XOrg + Radius * 2, YOffset = YOrg + Radius * 2;
+    double XOffset = XOrg + Radius * 1, YOffset = YOrg + Radius * 1;
     double FractAngle = 0.0, Angle;
     int Num_Nodes = this.NodeList.size();
     for (ncnt = 0; ncnt < Num_Nodes; ncnt++) {
@@ -73,22 +91,110 @@ public class Cluster implements IDrawable {
     }
   }
   /* ********************************************************************************* */
+  void Create_Woven_Hypercube(ArrayList<Node> array, double minangle, double maxangle, int mindex, int maxdex, int depth) {
+    /* **********************************************************************
+     *  This creates the shape so that the array is ordered around the circle.
+     * IE counting from array index 0 to the end of the array goes
+     * counterclockwise around the circle, pure and simple.
+     *   NOTE: this way the array index does not correspond to the
+     * hypercube vertex binary coordinates (index 101 is NOT vertex 101).
+     ********************************************************************** */
+    double medangle, border;
+    int meddex, cnt, num_points;
+    Node node0, node1;
+    double Radius = 150.0;
+    double XOffset = Radius * 1, YOffset = Radius * 1;
+    border = ((maxangle - minangle) / 2.0);// * 0.03;
+//  border=0.0;
+    depth -= 1;/* recursion depth */
+
+    num_points = maxdex - mindex;
+    meddex = (mindex + maxdex) / 2;
+    medangle = (minangle + maxangle) / 2.0;
+    if (depth >= 0) {
+      Create_Woven_Hypercube(array, minangle + border, medangle - border, mindex, meddex, depth);
+      Create_Woven_Hypercube(array, medangle + border, maxangle - border, meddex + 1, maxdex, depth);
+    } else {
+      node0 = array.get(meddex);
+      /* assumed to be centered on 0,0 with a radius of 1.0 */
+      node0.XLoc = XOffset + Math.cos(medangle) * Radius;
+      node0.YLoc = YOffset + Math.sin(medangle) * Radius;
+      //node0.address=0; /* not worked out yet. */
+    }
+    /* connect all nodes from min to med with max downto (med+1) */
+    num_points /= 2;
+    for (cnt = 0; cnt <= num_points; cnt++) {
+      node0 = array.get(mindex + cnt);
+      node1 = array.get(maxdex - cnt);
+      node0.ConnectIn(node1);
+      //plotline(outfile,node0->x,node0->y,node1->x,node1->y,30, 0.0,0.0, 1.0, depth);
+    }
+  }
+  /* ********************************************************************************* */
+  void Create_Woven_Hypercube2(ArrayList<Node> array, double minangle, double maxangle, int mindex, int maxdex, int depth) {
+    /* **********************************************************************
+     *  This creates the shape so that array index 000 is
+     *  vertex coordinate 000, and array index 111 is vertex 111, etc.
+     ********************************************************************** */
+    double medangle, border;
+    int meddex, cnt, num_points;
+    Node node0, node1;
+    double Radius = 150.0;
+    double XOffset = Radius * 1, YOffset = Radius * 1;
+
+    border = ((maxangle - minangle) / 2.0);// * 0.03;
+    // border=0.0;
+    depth -= 1;/* recursion depth */
+
+    meddex = (mindex + maxdex + 0) / 2;
+    medangle = (minangle + maxangle) / 2.0;
+    if (depth >= 0) {
+      Create_Woven_Hypercube2(array, minangle + border, medangle - border, mindex, meddex, depth);
+      Create_Woven_Hypercube2(array, maxangle - border, medangle + border, meddex + 1, maxdex, depth);
+    } else {
+      node0 = array.get(meddex);
+      /* assumed to be centered on 0,0 with a radius of 1.0 */
+      node0.XLoc = XOffset + Math.cos(medangle) * Radius;
+      node0.YLoc = YOffset + Math.sin(medangle) * Radius;
+    }
+    /* connect all nodes from min to med with max downto (med+1) */
+    num_points = 1 + Math.abs(maxdex - mindex);
+    num_points /= 2;
+    for (cnt = 0; cnt < num_points; cnt++) {
+      node0 = array.get(mindex + cnt);
+      node1 = array.get(1 + meddex + cnt);
+      node0.ConnectTwoWay(node1);
+      //plotline(outfile,node0->x,node0->y,node1->x,node1->y,30, 0.0,0.0, 1.0, depth);
+    }
+  }
+  /* ********************************************************************************* */
   public void ConnectHypercube(int NDims) {
+    this.ReadyToDraw = false;
     Node.MaxNbrs = NDims;
     int Num_Nodes = 1 << NDims;
     Fill_With_Nodes_Plain(Num_Nodes);
-    for (int cnt = 0; cnt < Num_Nodes; cnt++) {
-      Node me = this.NodeList.get(cnt);
-      for (int shiftcnt = 0; shiftcnt < NDims; shiftcnt++) {
-        int altaddr = cnt ^ (1 << shiftcnt);
-        Node you = this.NodeList.get(altaddr);
-        me.ConnectIn(you);//.ConnectTwoWay(you);
+    if (true) {
+      Create_Woven_Hypercube2(this.NodeList, 0.0, Math.PI * 2, 0, Num_Nodes - 1, NDims);
+    } else {
+      for (int cnt = 0; cnt < Num_Nodes; cnt++) {
+        Node me = this.NodeList.get(cnt);
+        for (int shiftcnt = 0; shiftcnt < NDims; shiftcnt++) {
+          int altaddr = cnt ^ (1 << shiftcnt);
+          Node you = this.NodeList.get(altaddr);
+          me.ConnectIn(you);//.ConnectTwoWay(you);
+        }
       }
     }
-    this.Make_Circular(0, 200, 120.0);
+    this.XOrg = 20;
+    this.YOrg = 300;
+    if (false) {
+      this.Make_Circular(0, 0, 150.0);
+    }
+    this.ReadyToDraw = true;
   }
   /* ********************************************************************************* */
   public void ConnectInnerSparse(int ConnectionsPerNode) {// Dunbar's number
+    this.ReadyToDraw = false;
     int NumNodes = this.NodeList.size();
     int DemasNum = NumNodes - 1;// size of whole set minus the current node self
     int FinalCon = ConnectionsPerNode - 1;// index of final connection of a node (4 connections means range of 0 to 3).
@@ -130,9 +236,88 @@ public class Cluster implements IDrawable {
      . }
      }
      */
+    this.ReadyToDraw = true;
+  }
+  /* ********************************************************************************* */
+  public void Refill_Random() {
+    boolean Depleted;// we are Depleted if we've run out of things to connect to each other
+    int OpenCnt;
+    int Num_Nodes = this.NodeList.size();
+    Node OtherNode;// easy, inefficient way
+    do {
+      Depleted = true;
+      OpenCnt = 0;
+      for (int cnt = 0; cnt < Num_Nodes; cnt++) {
+        Node nd = this.NodeList.get(cnt);
+        if (nd.IsOpen()) {
+          OpenCnt++;
+          OtherNode = nd.FindRandomOther(this);
+          if (OtherNode != null) {
+            nd.ConnectTwoWay(OtherNode);
+            Depleted = false;
+          }
+        }
+      }
+    } while (!Depleted);
+    if (OpenCnt > 0) {
+      //System.out.println("SomeAreOpen");
+    }
+    boolean broken = this.OverConnectCheck();
+    if (broken) {
+      System.out.println("** OverConnected!!!");
+      //throw new Exception();
+    }
+  }
+  /* ********************************************************************************* */
+  public void Remove_Random_Links(int Num_Doomed) {
+    for (int cnt = 0; cnt < Num_Doomed; cnt++) {
+      int rand = Base.RandomGenerator.nextInt(this.NodeList.size());
+      Node node = this.NodeList.get(rand);
+      node.DisconnectRandomTwoWay();
+    }
+  }
+  /* ********************************************************************************* */
+  public void Mutate(double Fraction_Doomed) {
+    int Num_Doomed = (int) (((double) this.NodeList.size()) * Fraction_Doomed);
+    Remove_Random_Links(Num_Doomed);
+    this.Refill_Random();
+  }
+  /* ********************************************************************************* */
+  public Cluster Clone_Me() {
+    Cluster grp = new Cluster();
+    HashMap<Node, Node> map = new HashMap<Node, Node>();
+    int len = this.NodeList.size();
+    Node self, child, usnode;
+    Synapse syn;// to clone a mesh, create all the nodes first
+    for (int cnt = 0; cnt < len; cnt++) {
+      self = this.NodeList.get(cnt);
+      child = new Node();
+      child.Copy_From(self);
+      map.put(self, child);
+      grp.NodeList.add(child);
+    }
+    for (int cnt = 0; cnt < len; cnt++) {// then connect them together
+      self = this.NodeList.get(cnt);
+      child = map.get(self);
+      int NumLinks = self.USLinks.size();
+      for (int lcnt = 0; lcnt < NumLinks; lcnt++) {
+        syn = self.USLinks.get(lcnt);
+        usnode = map.get(syn.USNode);
+        child.ConnectIn(usnode);
+      }
+    }
+    grp.Pack_Route_Table();
+    return grp;
+  }
+  /* ********************************************************************************* */
+  public Cluster Spawn_Mutant() {
+    Cluster child = this.Clone_Me();
+    child.Mutate(0.3);
+    return child;
   }
   /* ********************************************************************************* */
   public void Create_Random(int Num_Nodes, int Dunbar_Limit) {
+    this.ReadyToDraw = false;
     Node.MaxNbrs = Dunbar_Limit;
     this.Fill_With_Nodes_Plain(Num_Nodes);
     /*
@@ -158,34 +343,8 @@ public class Cluster implements IDrawable {
      back to rolling random problem.
     
      */
-    boolean Depleted;// we are Depleted if we've run out of things to connect to each other
-    int OpenCnt;
-    Node OtherNode;// easy, inefficient way
-    while (true) {
-      Depleted = true;
-      OpenCnt = 0;
-      for (int cnt = 0; cnt < Num_Nodes; cnt++) {
-        Node nd = this.NodeList.get(cnt);
-        if (nd.IsOpen()) {
-          OpenCnt++;
-          OtherNode = nd.FindRandomOther(this);
-          if (OtherNode != null) {
-            nd.ConnectTwoWay(OtherNode);
-            Depleted = false;
-          }
-        }
-      }
-      if (Depleted) {
-        break;
-      }
-    }
-    if (OpenCnt > 0) {
-      //System.out.println("SomeAreOpen");
-    }
-    boolean broken = this.OverConnectCheck();
-    if (broken) {
-      System.out.println("** OverConnected!!!");
-    }
+    this.Refill_Random();
+
 //    ArrayList<Node> open = new ArrayList<Node>();
 //    for (int cnt = 0; cnt < Num_Nodes; cnt++) {
 //      Node nd = this.NodeList.get(cnt);
@@ -204,10 +363,14 @@ public class Cluster implements IDrawable {
 //    Node nd0 = open.get(dex0);
 //    Node nd1 = open.get(dex1);
 //    nd0.ConnectTwoWay(nd1);
-    this.Make_Circular(0, 480, 120.0);
+    this.XOrg = 20;
+    this.YOrg = 640;
+    this.Make_Circular(0, 0, 150.0);
+    this.ReadyToDraw = true;
   }
   /* ********************************************************************************* */
-  public void Create_Heirarchy(int Num_Nodes, int Dunbar_Limit) {
+  public void Create_Hierarchy(int Num_Nodes, int Dunbar_Limit) {
+    this.ReadyToDraw = false;
     int NodeCnt = 0, TierStartCnt, TierCnt;
     Node.MaxNbrs = Dunbar_Limit;
     int Dun_Small = Dunbar_Limit - 1;
@@ -319,11 +482,11 @@ public class Cluster implements IDrawable {
       }
     }
     if (false) {
-      // to do: make a basket heirarchy. all childless children must connect laterally.
+      // to do: make a basket hierarchy. all childless children must connect laterally.
       for (int cnt = 0; cnt < ChildBuf.size(); cnt++) {
         ChildBuf.get(cnt);
       }
-      // more realistic would be a cul-de-sac basket heirarchy, where only children of the same parent can connect together. no inter-departmental connections.
+      // more realistic would be a cul-de-sac basket hierarchy, where only children of the same parent can connect together. no inter-departmental connections.
     }
     System.out.print("");
     if (false) {
@@ -343,6 +506,7 @@ public class Cluster implements IDrawable {
       }
     }
     this.Pack_Route_Table();
+    this.ReadyToDraw = true;
   }
   /* ********************************************************************************* */
   public void ConnectInput(Cluster other) {// connect all to all
@@ -366,6 +530,7 @@ public class Cluster implements IDrawable {
   public void Medir() {
     int gencnt = 0;
     //System.out.println("SendFirstPacket");
+    this.Clear_Scores();
     this.SendFirstPacket();
     while (this.Medir_Gen()) {
       //System.out.println("Medir_Gen:" + gencnt);
@@ -375,7 +540,7 @@ public class Cluster implements IDrawable {
 //    System.out.println("MaxDist:" + SumDist);
   }
   /* ********************************************************************** */
-  public double Get_Adjusted_Alienation_Number() {
+  public double GetSave_Adjusted_Alienation_Number() {
     Node ndp;
     double SumDistance = 0;// total alienation number
     int siz = this.NodeList.size();
@@ -384,10 +549,11 @@ public class Cluster implements IDrawable {
       if (ndp.RouteTable.size() < this.NodeList.size()) {
         SumDistance += Double.POSITIVE_INFINITY;// If any node is unreachable from any other node, distance (alienation) is infinite.
       } else {
-        SumDistance += ndp.Get_Adjusted_Alienation_Number(siz - 1);
+        SumDistance += ndp.GetSave_Adjusted_Alienation_Number(siz - 1);
       }
     }
-    return SumDistance / (double) siz;
+    this.AlienationNumber = SumDistance / (double) siz;
+    return this.AlienationNumber;//  return SumDistance / (double) siz;
   }
   /* ********************************************************************** */
   public double Get_Alienation_Number() {
@@ -425,7 +591,7 @@ public class Cluster implements IDrawable {
     });
   }
   /* ********************************************************************************* */
-  public double Measure_Inequality() {
+  public double GetSave_Inequality() {// must be executed after GetSave_Adjusted_Alienation_Number
     this.Sort();
     int siz = this.NodeList.size();
     int half = siz / 2;
@@ -442,6 +608,7 @@ public class Cluster implements IDrawable {
     }
     Sum1 /= (double) (siz - half);
     double Dist = Sum1 - Sum0;
+    this.Inequality = Dist;
     return Dist;
   }
   /* ********************************************************************************* */
@@ -481,8 +648,9 @@ public class Cluster implements IDrawable {
       //nd.color = Base.ToRainbow(1.0 - ((nd.AlienationNumber - Min) / Range));
       //nd.color = Base.ToGreenHeat(1.0 - ((nd.AlienationNumber - Min) / Range));
       //nd.color = Base.ToHeat(1.0 - ((nd.AlienationNumber - Min) / Range));
-      nd.color = Base.ToBlackBody(1.0 - ((nd.AlienationNumber - Min) / Range));
-      //nd.color = Base.ToBlackBody(((nd.AlienationNumber - Min) / Range));
+      //nd.color = Base.ToBlackBodyInv(1.0 - ((nd.AlienationNumber - Min) / Range));
+      nd.color = Base.ToBlackBody(((nd.AlienationNumber - Min) / Range));
+      //nd.color = Base.ToBlackBodyInv(((nd.AlienationNumber - Min) / Range));
     }
   }
   /* ********************************************************************************* */
@@ -529,7 +697,13 @@ public class Cluster implements IDrawable {
   @Override public void Draw_Me(DrawingContext ParentDC) {
     Node ndp;
     int cnt;
+    if (!this.ReadyToDraw) {
+      return;
+    }
     DrawingContext ChildDC = new DrawingContext(ParentDC);
+    ChildDC.XOrg = this.XOrg;
+    ChildDC.YOrg = this.YOrg;
+    Graphics2D g2d = ChildDC.gr;
     int siz = this.NodeList.size();
     for (cnt = 0; cnt < siz; cnt++) {
       ndp = this.NodeList.get(cnt);
@@ -539,5 +713,12 @@ public class Cluster implements IDrawable {
       ndp = this.NodeList.get(cnt);
       ndp.Draw_Body(ChildDC);
     }
+    double Wdt = 320, Hgt = 100;
+    g2d.setColor(Color.black);
+    String text = String.format("Alienation:%1$.1f", this.AlienationNumber);
+    g2d.drawString(text, (int) (ChildDC.XOrg + Wdt), (int) (ChildDC.YOrg + Hgt));
+
+    text = String.format("Inequality:%1$.1f", this.Inequality);
+    g2d.drawString(text, (int) (ChildDC.XOrg + Wdt + 100), (int) (ChildDC.YOrg + Hgt));
   }
 }

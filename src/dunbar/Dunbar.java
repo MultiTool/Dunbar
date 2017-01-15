@@ -5,6 +5,10 @@
  */
 package dunbar;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
 /**
  *
  * @author MultiTool
@@ -15,8 +19,19 @@ public class Dunbar {
    * @param args the command line arguments
    */
   public static void main(String[] args) {
-    MainGui mg = new MainGui();
-    mg.Init();
+    if (true){
+       Cluster winner = Farm.Evolve();
+    }
+    if (false) {
+      MainGui mg = new MainGui();
+      mg.Init();
+      if (true) {
+        Cluster winner = Farm.Evolve();
+        winner.ReadyToDraw = false;
+        mg.drawpanel.cluster0 = winner;
+        winner.ReadyToDraw = true;
+      }
+    }
 
     /*
      Next steps:
@@ -27,8 +42,8 @@ public class Dunbar {
      spray of random networks to see range of performance - done
      genalg breeding of random networks to try for improvement - next 
      output networks as SVG
-     basket heirarchy
-     plot cube, heirarchy and random networks with same color scale to make relative alienation for each node and network visible. 
+     basket hierarchy
+     plot cube, hierarchy and random networks with same color scale to make relative alienation for each node and network visible. 
      use spring physics to self-sort random networks
      
      */
@@ -96,6 +111,7 @@ public class Dunbar {
     
      */
   }
+  /* ********************************************************************************* */
   public static void ConnectStuff() {
     Cluster pop = new Cluster();
     int Num_Nodes = 10;

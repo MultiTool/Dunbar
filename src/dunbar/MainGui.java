@@ -17,12 +17,15 @@ import javax.swing.JFrame;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
@@ -53,7 +56,12 @@ public class MainGui {
     contentPane.add(this.drawpanel);
     this.drawpanel.BigApp = this;
     frame.setVisible(true);
-    Bleh();
+    if (false) {
+      for (int NDims = 2; NDims < 7; NDims++) {//12
+        this.drawpanel.save2(NDims);
+      }
+      Bleh();
+    }
   }
   /* ********************************************************************************* */
   public static class DrawingPanel extends JPanel implements MouseMotionListener, MouseListener, MouseWheelListener, ComponentListener, KeyListener {
@@ -62,6 +70,7 @@ public class MainGui {
     Cluster cluster0 = new Cluster();
     Cluster cluster1 = new Cluster();
     Cluster cluster2 = new Cluster();
+    double Min = Double.MAX_VALUE, Max = Double.MIN_VALUE;
     /* ********************************************************************************* */
     public DrawingPanel() {
       if (true) {
@@ -70,10 +79,12 @@ public class MainGui {
           NDims = 4;
           RepeatRandom(NDims);
         }
+        if (false) {
 //        cluster.Create_Random(1 << NDims, NDims);
 //        System.out.print("Create_Random");
-        for (NDims = 5; NDims < 6; NDims++) {//12
-          TestDimension(NDims);
+          for (NDims = 2; NDims < 12; NDims++) {//12
+            this.TestDimension(NDims);
+          }
         }
       } else {
         int Num_Nodes = 64;// 64 is 2^6. 
@@ -95,7 +106,8 @@ public class MainGui {
     /* ********************************************************************************* */
     public void RepeatRandom(int NDims) {
       int NumNodes = 1 << NDims;
-      double Min = Double.MAX_VALUE, Max = Double.MIN_VALUE;
+      Min = Double.MAX_VALUE;
+      Max = Double.MIN_VALUE;
 
       System.out.print(" NDims:" + NDims + ", NumNodes:" + NumNodes + ",");
       System.out.println();
@@ -104,9 +116,9 @@ public class MainGui {
         cluster0.Create_Random(NumNodes, NDims);
         //System.out.println("cluster0.Medir");
         this.cluster0.Medir();
-        //System.out.println("cluster0.Get_Adjusted_Alienation_Number");
-        double Alien2 = this.cluster0.Get_Adjusted_Alienation_Number();
-        double InEq2 = this.cluster0.Measure_Inequality();
+        //System.out.println("cluster0.GetSave_Adjusted_Alienation_Number");
+        double Alien2 = this.cluster0.GetSave_Adjusted_Alienation_Number();
+        double InEq2 = this.cluster0.GetSave_Inequality();
         //System.out.println("cluster0.Get_Min_Alienation");
         Min = Math.min(Min, this.cluster0.Get_Min_Alienation());
         Max = Math.max(Max, this.cluster0.Get_Max_Alienation());
@@ -120,25 +132,26 @@ public class MainGui {
     public void TestDimension(int NDims) {
       int NumNodes = 1 << NDims;
       double MaxConnections = NumNodes * (NumNodes - 1);
-      double Min = Double.MAX_VALUE, Max = Double.MIN_VALUE;
+      Min = Double.MAX_VALUE;
+      Max = Double.MIN_VALUE;
 
       System.out.print(" NDims:" + NDims + ", NumNodes:" + NumNodes + ",");
 
       if (true) {
         cluster0.ConnectHypercube(NDims);
         this.cluster0.Medir();
-        double Alien0 = this.cluster0.Get_Adjusted_Alienation_Number();
-        double InEq0 = this.cluster0.Measure_Inequality();
+        double Alien0 = this.cluster0.GetSave_Adjusted_Alienation_Number();
+        double InEq0 = this.cluster0.GetSave_Inequality();
         Min = Math.min(Min, this.cluster0.Get_Min_Alienation());
         Max = Math.max(Max, this.cluster0.Get_Max_Alienation());
         this.cluster0.Colorize();
         System.out.print(" Alien0:" + Alien0 + ", InEq0:" + InEq0 + ",");
       }
       if (true) {
-        cluster1.Create_Heirarchy(NumNodes, NDims);
+        cluster1.Create_Hierarchy(NumNodes, NDims);
         this.cluster1.Medir();
-        double Alien1 = this.cluster1.Get_Adjusted_Alienation_Number();
-        double InEq1 = this.cluster1.Measure_Inequality();
+        double Alien1 = this.cluster1.GetSave_Adjusted_Alienation_Number();
+        double InEq1 = this.cluster1.GetSave_Inequality();
         Min = Math.min(Min, this.cluster1.Get_Min_Alienation());
         Max = Math.max(Max, this.cluster1.Get_Max_Alienation());
         this.cluster1.Colorize();
@@ -148,8 +161,19 @@ public class MainGui {
       if (true) {
         cluster2.Create_Random(NumNodes, NDims);
         this.cluster2.Medir();
-        double Alien2 = this.cluster2.Get_Adjusted_Alienation_Number();
-        double InEq2 = this.cluster2.Measure_Inequality();
+        double Alien2 = this.cluster2.GetSave_Adjusted_Alienation_Number();
+        double InEq2 = this.cluster2.GetSave_Inequality();
+        Min = Math.min(Min, this.cluster2.Get_Min_Alienation());
+        Max = Math.max(Max, this.cluster2.Get_Max_Alienation());
+//        this.cluster.Colorize(Min, Max);
+        this.cluster2.Colorize();
+        System.out.print(" Alien2:" + Alien2 + ", InEq2:" + InEq2 + ",");
+      }
+      if (false) {
+        cluster2 = Farm.Evolve(NumNodes, NDims);
+        this.cluster2.Medir();
+        double Alien2 = this.cluster2.GetSave_Adjusted_Alienation_Number();
+        double InEq2 = this.cluster2.GetSave_Inequality();
         Min = Math.min(Min, this.cluster2.Get_Min_Alienation());
         Max = Math.max(Max, this.cluster2.Get_Max_Alienation());
 //        this.cluster.Colorize(Min, Max);
@@ -185,14 +209,36 @@ public class MainGui {
       g2d.setStroke(oldStroke);
 
       this.cluster0.Draw_Me(dc);
-      this.cluster1.Draw_Me(dc);
-      this.cluster2.Draw_Me(dc);
+      if (true) {
+        this.cluster1.Draw_Me(dc);
+        this.cluster2.Draw_Me(dc);
+      }
+      this.Draw_Scale_Bar(dc, 900, 400, this.Min, this.Max);
+    }
+    /* ********************************************************************************* */
+    public void Draw_Scale_Bar(DrawingContext ParentDC, int XLoc, int YLoc, double Min, double Max) {
+      Graphics2D g2d = ParentDC.gr;
+      int wdt = 50, hgt = 200;
+      float[] dist = {0.0f, 0.5f, 1.0f};
+      Color[] colors = {Base.ToBlackBody(1.0), Base.ToBlackBody(0.5), Base.ToBlackBody(0.0)};
+      LinearGradientPaint lgp = new LinearGradientPaint(XLoc, YLoc, XLoc, YLoc + hgt, dist, colors);
+      g2d.setPaint(lgp);
+      g2d.fillRect(XLoc, YLoc, wdt, hgt);
+
+      // plot numbers
+      String MinTxt = String.format("%1$.1f", Min);
+      String MaxTxt = String.format("%1$.1f", Max);
+      g2d.setColor(Color.black);
+      g2d.drawString(MinTxt, XLoc + wdt + 2, YLoc + hgt);
+      g2d.setColor(Color.black);
+      g2d.drawString(MaxTxt, XLoc + wdt + 2, YLoc + 0);
     }
     /* ********************************************************************************* */
     @Override public void paintComponent(Graphics g) {
       super.paintComponent(g);
       Graphics2D g2d = (Graphics2D) g;
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
       Draw_Me(g2d);// redrawing everything is overkill for every little change or move. to do: optimize this
       this.repaint();
     }
@@ -210,31 +256,22 @@ public class MainGui {
       }
     }
     /* ********************************************************************************* */
-    public void save2() {//http://www.java2s.com/Code/Java/2D-Graphics-GUI/SavingaGeneratedGraphictoaPNGorJPEGFile.htm
+    public void save2(int NDims) {//http://www.java2s.com/Code/Java/2D-Graphics-GUI/SavingaGeneratedGraphictoaPNGorJPEGFile.htm
+      this.TestDimension(NDims);
       int scale = 4;
       int width = 1300 * scale;
       int height = 1000 * scale;
 
-      BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+      BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
       Graphics2D g2d = bufferedImage.createGraphics();
-//      AffineTransform originalTransform = g2d.getTransform();
-//      g2d.transform(originalTransform);
       g2d.scale(scale, scale);
-
       this.Draw_Me(g2d);
-//      g2d.setColor(Color.white);
-//      g2d.fillRect(0, 0, width, height);
-//      g2d.setColor(Color.black);
-//      g2d.fillOval(0, 0, width, height);
-
       g2d.dispose();
       RenderedImage rendImage = bufferedImage;
+      String numtxt = String.format("%d", NDims);
       try {
-        File file = new File("newimage.png");
+        File file = new File("Dunbar_Dim" + numtxt + ".png");
         ImageIO.write(rendImage, "png", file);
-
-//        file = new File("newimage.jpg");
-//        ImageIO.write(rendImage, "jpg", file);
       } catch (IOException e) {
         e.printStackTrace();
       }
@@ -305,7 +342,7 @@ public class MainGui {
       boolean CtrlPress = ((mod & KeyEvent.CTRL_MASK) != 0);
       if ((keycode == KeyEvent.VK_C) && CtrlPress) {
         //this.drawpanel.save();
-        this.drawpanel.save2();
+//        this.drawpanel.save2();
       } else if (keycode == KeyEvent.VK_DELETE) {
       } else if ((keycode == KeyEvent.VK_Q) && CtrlPress) {
         System.exit(0);

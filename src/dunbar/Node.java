@@ -1,11 +1,20 @@
 package dunbar;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.GradientPaint;
 import java.awt.Graphics2D;
+import java.awt.RadialGradientPaint;
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.Stroke;
+import java.awt.font.FontRenderContext;
+import java.awt.font.TextLayout;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -26,7 +35,7 @@ public class Node implements IDrawable {
   public ArrayList<BlastPacket> BlastPacketInBuf, BlastPacketOutBuf;
   public double AlienationNumber = 0;
   public double XLoc = 0, YLoc = 0;
-  int Radius = 10, Diameter = Radius * 2;
+  int Radius = 12, Diameter = Radius * 2;
   public int NodeId;
   public static int NodeCounter = 0;
   public Color color;
@@ -43,6 +52,15 @@ public class Node implements IDrawable {
     }
   }
   /* ********************************************************************************* */
+  public void Copy_From(Node other) {
+    this.XLoc = other.XLoc;
+    this.YLoc = other.YLoc;
+    this.Radius = other.Radius;
+    this.Diameter = other.Diameter;
+//    this.NodeId = other.NodeId;
+//    this.color = new Color(other.color.toString());
+  }
+  /* ********************************************************************************* */
   public void Pack_Route_Table(Cluster Network) {
     RouteEntry route;// if the network is split into two or more islands, the node will at least know that some other nodes are infinitely far away
     Node other;
@@ -54,6 +72,18 @@ public class Node implements IDrawable {
     }
     route = this.RouteTable.get(this.NodeId);// make route to self be distance 0 from the start.
     route.Distance = 0;
+  }
+  /* ********************************************************************** */
+  public void Clear_Scores() {
+    //this.RouteTable.clear();
+    RouteEntry route;
+    Iterator it = this.RouteTable.entrySet().iterator();
+    while (it.hasNext()) {
+      Map.Entry pair = (Map.Entry) it.next();
+      route = (RouteEntry) pair.getValue();
+      route.Distance = Double.POSITIVE_INFINITY;
+    }
+    this.AlienationNumber = Double.POSITIVE_INFINITY;
   }
   /* ********************************************************************************* */
   public boolean IsConnectedTo(Node other) {// inefficent test for connectedness
@@ -89,7 +119,7 @@ public class Node implements IDrawable {
     int RandDex = Base.RandomGenerator.nextInt(len);
     Node possible, found = null;
     int cnt = RandDex;
-    while (true) {
+    do {
       possible = NodeList.get(cnt);
       if (possible.IsOpen()) {
         if (possible != this) {
@@ -103,10 +133,7 @@ public class Node implements IDrawable {
       if (cnt >= len) {
         cnt = 0;
       }
-      if (cnt == RandDex) {
-        break;
-      }
-    }
+    } while (cnt != RandDex);
     return found;
   }
   /* ********************************************************************************* */
@@ -143,10 +170,61 @@ public class Node implements IDrawable {
   }
   /* ********************************************************************************* */
   public void ConnectTwoWay(Node other) {
+    if (!this.CheckConnections()) {
+      System.out.println("this.CheckConnections fail");
+      return;
+    }
+    if (!other.CheckConnections()) {
+      System.out.println("other.CheckConnections fail");
+      return;
+    }
     Synapse MySyn = this.ConnectIn(other);
     Synapse YouSyn = other.ConnectIn(this);
-    MySyn.MyMirror = YouSyn;
+    MySyn.MyMirror = YouSyn;// warning: this MyMirror stuff is not used or applied consistently
     YouSyn.MyMirror = MySyn;
+  }
+  /* ********************************************************************************* */
+  public Synapse DisconnectRandomTwoWay() {
+    if (this.USLinks.size() > 0) {
+      int rand = Base.RandomGenerator.nextInt(this.USLinks.size());
+      Synapse syn = this.USLinks.get(rand);
+      Node other = syn.USNode;
+      this.USLinks.remove(syn);
+      other.DSLinks.remove(syn);
+      other.DisconnectIn(this);
+      return syn;
+    }
+    return null;
+  }
+  /* ********************************************************************************* */
+  public Synapse DisconnectIn(Node other) {
+    int len = this.USLinks.size();
+    Synapse syn = null;
+    for (int cnt = 0; cnt < len; cnt++) {
+      syn = this.USLinks.get(cnt);
+      if (syn.USNode == other) {
+        this.USLinks.remove(syn);
+        other.DSLinks.remove(syn);
+        return syn;
+      }
+    }
+    return null;
+  }
+  /* ********************************************************************************* */
+  public void DisconnectTwoWay(Node other) {
+    Synapse syn0, syn1;
+    syn0 = this.DisconnectIn(other);
+    syn1 = other.DisconnectIn(this);
+  }
+  /* ********************************************************************************* */
+  public boolean CheckConnections() {
+    if (this.USLinks.size() >= Node.MaxNbrs) {
+      return false;
+    }
+    if (this.DSLinks.size() >= Node.MaxNbrs) {
+      return false;
+    }
+    return true;
   }
   /* ********************************************************************************* */
   public void Disconnect(Node other) {// rough draft
@@ -194,7 +272,7 @@ public class Node implements IDrawable {
     //return MaxDistance;
   }
   /* ********************************************************************** */
-  public double Get_Adjusted_Alienation_Number(double ClusterSize) {//Assign_Alienation_Number
+  public double GetSave_Adjusted_Alienation_Number(double ClusterSize) {//Assign_Alienation_Number
     this.AlienationNumber = this.Get_Alienation_Number() / ClusterSize;
     return this.AlienationNumber;
   }
@@ -294,7 +372,7 @@ public class Node implements IDrawable {
       
       
    */
- /* ********************************************************************** */
+  /* ********************************************************************** */
   void Push_Fire() {
     /*
      everybody at once:
@@ -305,6 +383,7 @@ public class Node implements IDrawable {
       
      */
   }
+  /* ********************************************************************** */
   public void AssignLoc(double XPos, double YPos) {
     this.XLoc = XPos;
     this.YLoc = YPos;
@@ -312,42 +391,68 @@ public class Node implements IDrawable {
   /* ********************************************************************************* */
   @Override public void Draw_Me(DrawingContext ParentDC) {
     Graphics2D g2d = ParentDC.gr;
-    int NumDs = DSLinks.size();
-    Synapse syn;
-    for (int scnt = 0; scnt < NumDs; scnt++) {
-      syn = this.DSLinks.get(scnt);
-      syn.Draw_Me(ParentDC);
-    }
-    g2d.setColor(this.color);
-    g2d.fillOval(((int) this.XLoc) - Radius, ((int) this.YLoc) - Radius, Diameter, Diameter);
-
-    String txt = String.format("%1$.1f", this.AlienationNumber);
-    g2d.setColor(Color.green);
-
-    //Font font = ParentDC.gr.getFont();
-    g2d.setFont(g2d.getFont().deriveFont(Font.BOLD));
-    g2d.setColor(Color.white);
-    DrawCenteredString(g2d, (int) this.XLoc, (int) this.YLoc, txt);
-    g2d.setFont(g2d.getFont().deriveFont(Font.PLAIN));
-    g2d.setColor(Color.green);
-    DrawCenteredString(g2d, (int) this.XLoc, (int) this.YLoc, txt);
-    //ParentDC.gr.drawString(txt, (float) this.XLoc, (float) this.YLoc);
+    this.Draw_Connections(ParentDC);
+    this.Draw_Body(ParentDC);
   }
   /* ********************************************************************************* */
   public void Draw_Body(DrawingContext ParentDC) {
     Graphics2D g2d = ParentDC.gr;
+    double xloc = (ParentDC.XOrg + this.XLoc);
+    double yloc = (ParentDC.YOrg + this.YLoc);
     g2d.setColor(this.color);
-    g2d.fillOval(((int) this.XLoc) - Radius, ((int) this.YLoc) - Radius, Diameter, Diameter);
+    g2d.fillOval(((int) xloc) - Radius, ((int) yloc) - Radius, Diameter, Diameter);
     String txt = String.format("%1$.1f", this.AlienationNumber);
     g2d.setColor(Color.green);
-    //Font font = ParentDC.gr.getFont();
-    g2d.setFont(g2d.getFont().deriveFont(Font.BOLD));
-    g2d.setColor(Color.white);
-    DrawCenteredString(g2d, (int) this.XLoc, (int) this.YLoc, txt);
-    g2d.setFont(g2d.getFont().deriveFont(Font.PLAIN));
-    g2d.setColor(Color.green);
-    DrawCenteredString(g2d, (int) this.XLoc, (int) this.YLoc, txt);
-    //ParentDC.gr.drawString(txt, (float) this.XLoc, (float) this.YLoc);
+    Font font = g2d.getFont();
+    if (false) {
+      g2d.setFont(g2d.getFont().deriveFont(Font.BOLD));
+      g2d.setColor(Color.white);
+      DrawCenteredString(g2d, (int) xloc, (int) yloc, txt);
+    }
+    if (false) {
+      FontRenderContext frc = g2d.getFontRenderContext();
+      Font f = font;//new Font("Helvetica", 1, 60);
+      String s = txt;
+      TextLayout textTl = new TextLayout(s, f, frc);
+      AffineTransform transform = new AffineTransform();
+      transform.translate(xloc, yloc);
+      Shape outline = textTl.getOutline(transform);
+      Rectangle2D r2d = outline.getBounds2D();
+      //Rectangle outlineBounds = outline.getBounds();
+//      transform = g2d.getTransform();
+//      transform.translate(width / 2 - (outlineBounds.width / 2), height / 2 + (outlineBounds.height / 2));
+      //g2d.transform(transform);
+      Stroke stroke = new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+      //Stroke stroke = new Stroke();
+      g2d.setStroke(stroke);
+      g2d.setColor(Color.white);
+      g2d.draw(outline);
+      g2d.setColor(Color.black);
+      g2d.fill(outline);
+      //g2d.setClip(outline);
+    }
+    if (false) {
+      int InnerRadius = Radius - 2, InnerDiameter = InnerRadius * 2;
+      //ContourGradientPaint cgp;
+      float[] dist = {0.0f, 0.65f, 1.0f};
+      Color[] colors = {Color.white, Color.white, Base.ToAlpha(Color.white, 0)};
+      Point2D center = new Point2D.Float((float) xloc, (float) yloc);
+      RadialGradientPaint rgp = new RadialGradientPaint(center, InnerRadius, dist, colors);
+      g2d.setPaint(rgp);
+      //g2d.setColor(Color.white);
+      g2d.fillOval(((int) xloc) - InnerRadius, ((int) yloc) - InnerRadius, InnerDiameter, InnerDiameter);
+      //ParentDC.gr.drawString(txt, (float) this.XLoc, (float) this.YLoc);
+    }
+    if (true) {
+      //g2d.setFont(g2d.getFont().deriveFont(Font.PLAIN));
+      g2d.setFont(g2d.getFont().deriveFont(Font.BOLD));
+      g2d.setColor(Color.black);
+      //g2d.setXORMode(Color.black);
+      g2d.setColor(Base.Contrastify(this.color));
+      DrawCenteredString(g2d, (int) xloc, (int) yloc, txt);
+      //ParentDC.gr.drawString(txt, (float) this.XLoc, (float) this.YLoc);
+      g2d.setPaintMode();
+    }
   }
   /* ********************************************************************************* */
   public void Draw_Connections(DrawingContext ParentDC) {
@@ -367,6 +472,12 @@ public class Node implements IDrawable {
     int x = XCtr - (metrics.stringWidth(text)) / 2;
     // Determine the Y coordinate for the text (note we add the ascent, as in java 2d 0 is top of the screen)
     int y = YCtr - ((metrics.getHeight()) / 2) + metrics.getAscent();
+    if (false) {
+      Rectangle2D r2d = new Rectangle2D.Double(x, YCtr - ((metrics.getHeight()) / 2), metrics.stringWidth(text), metrics.getHeight());
+      g2d.setColor(Color.white);
+      g2d.fill(r2d);
+      g2d.setColor(Color.black);
+    }
     // Draw the String
     g2d.drawString(text, x, y);
   }
