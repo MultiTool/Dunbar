@@ -93,6 +93,7 @@ public class Cluster implements IDrawable {
   /* ********************************************************************************* */
   void Create_Woven_Hypercube(ArrayList<Node> array, double minangle, double maxangle, int mindex, int maxdex, int depth) {
     /* **********************************************************************
+     * WARNING: for some reason this does not work right yet.
      *  This creates the shape so that the array is ordered around the circle.
      * IE counting from array index 0 to the end of the array goes
      * counterclockwise around the circle, pure and simple.
@@ -103,7 +104,7 @@ public class Cluster implements IDrawable {
     int meddex, cnt, num_points;
     Node node0, node1;
     double Radius = 150.0;
-    double XOffset = Radius * 1, YOffset = Radius * 1;
+    double XOffset = Radius, YOffset = Radius;
     border = ((maxangle - minangle) / 2.0);// * 0.03;
 //  border=0.0;
     depth -= 1;/* recursion depth */
@@ -119,7 +120,6 @@ public class Cluster implements IDrawable {
       /* assumed to be centered on 0,0 with a radius of 1.0 */
       node0.XLoc = XOffset + Math.cos(medangle) * Radius;
       node0.YLoc = YOffset + Math.sin(medangle) * Radius;
-      //node0.address=0; /* not worked out yet. */
     }
     /* connect all nodes from min to med with max downto (med+1) */
     num_points /= 2;
@@ -140,7 +140,7 @@ public class Cluster implements IDrawable {
     int meddex, cnt, num_points;
     Node node0, node1;
     double Radius = 150.0;
-    double XOffset = Radius * 1, YOffset = Radius * 1;
+    double XOffset = Radius, YOffset = Radius;
 
     border = ((maxangle - minangle) / 2.0);// * 0.03;
     // border=0.0;
@@ -174,7 +174,7 @@ public class Cluster implements IDrawable {
     int Num_Nodes = 1 << NDims;
     Fill_With_Nodes_Plain(Num_Nodes);
     if (true) {
-      Create_Woven_Hypercube2(this.NodeList, 0.0, Math.PI * 2, 0, Num_Nodes - 1, NDims);
+      Create_Woven_Hypercube2(this.NodeList, 0.0, Math.PI * 2, 0, Num_Nodes - 1, NDims);// better graphic arrangement
     } else {
       for (int cnt = 0; cnt < Num_Nodes; cnt++) {
         Node me = this.NodeList.get(cnt);

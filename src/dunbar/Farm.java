@@ -26,15 +26,15 @@ public class Farm {
     return farm;
   }
   /* ********************************************************************************* */
-  public static Cluster Evolve() {
+  public static Cluster Evolve() {// genalg optimization of random networks
     int Dunbar_Limit = 4;//5;//4;//3;
     int NumNodes = 1 << Dunbar_Limit;
     return Evolve(NumNodes, Dunbar_Limit);
   }
   /* ********************************************************************************* */
-  public static Cluster Evolve(int NumNodes, int Dunbar_Limit) {
-    int Num_Clusters = 100;
-    int Replace_Num = Num_Clusters * 4 / 5;/// 2;//
+  public static Cluster Evolve(int NumNodes, int Dunbar_Limit) {// genalg optimization of random networks
+    int Num_Clusters = 100;// population of networks (number of societies to reproduce and measure at once)
+    int Replace_Num = Num_Clusters * 4 / 5;/// 2;//  rate of replacement of old generation with new generation
     int Donor_Num = Num_Clusters - Replace_Num;
     System.out.println(" Dunbar_Limit:" + Dunbar_Limit + ", NumNodes:" + NumNodes + "");
 
@@ -51,13 +51,13 @@ public class Farm {
         InEq = seed.GetSave_Inequality();
         seed.Colorize();
       }
-      // sort and reproduce
+      // sort, select and reproduce
       Collections.sort(farm, new Comparator<Cluster>() {
         @Override public int compare(Cluster cluster0, Cluster cluster1) {
           if (true) {
             return -Double.compare(cluster0.AlienationNumber, cluster1.AlienationNumber);// breeding for goodness
           } else {
-            return Double.compare(cluster0.AlienationNumber, cluster1.AlienationNumber);// breeding for badness
+            return Double.compare(cluster0.AlienationNumber, cluster1.AlienationNumber);// breeding for badness, to test if breeding has any effect 
           }
         }
       });
@@ -67,8 +67,8 @@ public class Farm {
         InEq = seed.Inequality;
         System.out.println(" Alien:" + Alien + ", InEq:" + InEq + ",");
       }
-      winner = farm.get(Num_Clusters - 1);
-      // go through all the highest (worst) alienation numbers and replace with muatated copies from the best
+      winner = farm.get(Num_Clusters - 1);// pick a top winner for later measurement
+      // Go through all the highest (worst) alienation numbers and replace with muatated copies from the best
       for (int cnt = 0; cnt < Replace_Num; cnt++) {
         int DonorDex = (Replace_Num + (cnt % Donor_Num));
         seed = farm.get(DonorDex);

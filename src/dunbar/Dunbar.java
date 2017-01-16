@@ -5,9 +5,15 @@
  */
 package dunbar;
 
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import javax.imageio.ImageIO;
 
 /**
  *
@@ -19,18 +25,14 @@ public class Dunbar {
    * @param args the command line arguments
    */
   public static void main(String[] args) {
-    if (true){
-       Cluster winner = Farm.Evolve();
-    }
+    TestGroup tg = new TestGroup();
+    tg.RunTests();// output to command-line and png graphic files
     if (false) {
+      Cluster winner = Farm.Evolve();// genalg optimization of random networks
+    }
+    if (true) {
       MainGui mg = new MainGui();
-      mg.Init();
-      if (true) {
-        Cluster winner = Farm.Evolve();
-        winner.ReadyToDraw = false;
-        mg.drawpanel.cluster0 = winner;
-        winner.ReadyToDraw = true;
-      }
+      mg.Init();// display in GUI
     }
 
     /*
