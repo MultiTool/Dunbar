@@ -25,12 +25,14 @@ public class Dunbar {
    * @param args the command line arguments
    */
   public static void main(String[] args) {
-    TestGroup tg = new TestGroup();
-    tg.RunTests();// output to command-line and png graphic files
+    if (true) {
+      TestGroup tg = new TestGroup();
+      tg.RunTests();// output to command-line and png graphic files
+    }
     if (false) {
       Cluster winner = Farm.Evolve();// genalg optimization of random networks
     }
-    if (true) {
+    if (false) {
       MainGui mg = new MainGui();
       mg.Init();// display in GUI
     }
@@ -118,9 +120,9 @@ public class Dunbar {
     Cluster pop = new Cluster();
     int Num_Nodes = 10;
     int Connections_Per_Node = 4;
-    pop.Fill_With_Nodes(Num_Nodes);
+    pop.Fill_With_Nodes_Circular(Num_Nodes);
+    pop.Make_Circular(120.0 * 2, 120.0 * 2, 120.0);
     pop.ConnectInnerSparse(Connections_Per_Node);
-
     DrawingContext ParentDC = new DrawingContext();
     pop.Draw_Me(ParentDC);
   }

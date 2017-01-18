@@ -10,6 +10,9 @@ import java.util.HashMap;
 /**
  *
  * @author MultiTool
+ *
+ * Cluster is a self-contained population or society of Nodes/people.
+ * Nodes within a cluster can be connected to each other, but not to those in other Clusters. 
  */
 public class Cluster implements IDrawable {
   public ArrayList<Node> NodeList = new ArrayList<Node>();
@@ -18,11 +21,6 @@ public class Cluster implements IDrawable {
   public boolean ReadyToDraw = false;
   /* ********************************************************************** */
   Cluster() {
-  }
-  /* ********************************************************************** */
-  Cluster(int Num_Nodes) {
-    this();
-    Fill_With_Nodes(Num_Nodes);
   }
   /* ********************************************************************************* */
   public void Pack_Route_Table() {
@@ -57,22 +55,13 @@ public class Cluster implements IDrawable {
     this.Pack_Route_Table();
   }
   /* ********************************************************************** */
-  void Fill_With_Nodes(int Num_Nodes) {
+  void Fill_With_Nodes_Circular(int Num_Nodes) {
     this.ReadyToDraw = false;
-    Node ndp;
-    int ncnt;
     this.NodeList.clear();
     double Radius = 120.0;
     double XOffset = Radius * 2, YOffset = Radius * 2;
-    double FractAngle = 0.0, Angle;
-    for (ncnt = 0; ncnt < Num_Nodes; ncnt++) {
-      ndp = new Node();
-      this.NodeList.add(ndp);
-      FractAngle = ((double) ncnt) / ((double) Num_Nodes);
-      Angle = FractAngle * Math.PI * 2.0;
-      ndp.XLoc = XOffset + Math.cos(Angle) * Radius;
-      ndp.YLoc = YOffset + Math.sin(Angle) * Radius;
-    }
+    Fill_With_Nodes_Plain(Num_Nodes);
+    Make_Circular(XOffset, YOffset, Radius);
     this.Pack_Route_Table();
   }
   /* ********************************************************************** */

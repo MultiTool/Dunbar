@@ -27,8 +27,10 @@ public class Farm {
   }
   /* ********************************************************************************* */
   public static Cluster Evolve() {// genalg optimization of random networks
-    int Dunbar_Limit = 4;//5;//4;//3;
+    int Dunbar_Limit = 3;//4;//5;//4;//3;
     int NumNodes = 1 << Dunbar_Limit;
+    NumNodes *= 100;
+    NumNodes = 200;
     return Evolve(NumNodes, Dunbar_Limit);
   }
   /* ********************************************************************************* */
@@ -81,4 +83,29 @@ public class Farm {
     System.out.println("Done");
     return winner;
   }
+  /* ********************************************************************************* */
+//    public void RepeatRandom(int NDims) {// make a bunch of random networks to see the range of goodness and badness possible
+//      int NumNodes = 1 << NDims;
+//      Min = Double.MAX_VALUE;
+//      Max = Double.MIN_VALUE;
+//
+//      System.out.print(" NDims:" + NDims + ", NumNodes:" + NumNodes + ",");
+//      System.out.println();
+//      for (int cnt = 0; cnt < 200; cnt++) {
+//        //System.out.println("cluster0.Create_Random");
+//        cluster0.Create_Random(NumNodes, NDims);
+//        //System.out.println("cluster0.Medir");
+//        this.cluster0.Medir();
+//        //System.out.println("cluster0.GetSave_Adjusted_Alienation_Number");
+//        double Alien2 = this.cluster0.GetSave_Adjusted_Alienation_Number();
+//        double InEq2 = this.cluster0.GetSave_Inequality();
+//        //System.out.println("cluster0.Get_Min_Alienation");
+//        Min = Math.min(Min, this.cluster0.Get_Min_Alienation());
+//        Max = Math.max(Max, this.cluster0.Get_Max_Alienation());
+//        //System.out.println("cluster0.Colorize");
+//        this.cluster0.Colorize();
+//        System.out.print(" Alien:" + Alien2 + ", InEq:" + InEq2 + ",");
+//        System.out.println();
+//      }
+//    }
 }

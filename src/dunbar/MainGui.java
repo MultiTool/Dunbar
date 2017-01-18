@@ -73,33 +73,7 @@ public class MainGui {
     public DrawingPanel() {
     }
     /* ********************************************************************************* */
-//    public void RepeatRandom(int NDims) {// make a bunch of random networks to see the range of goodness and badness possible
-//      int NumNodes = 1 << NDims;
-//      Min = Double.MAX_VALUE;
-//      Max = Double.MIN_VALUE;
-//
-//      System.out.print(" NDims:" + NDims + ", NumNodes:" + NumNodes + ",");
-//      System.out.println();
-//      for (int cnt = 0; cnt < 200; cnt++) {
-//        //System.out.println("cluster0.Create_Random");
-//        cluster0.Create_Random(NumNodes, NDims);
-//        //System.out.println("cluster0.Medir");
-//        this.cluster0.Medir();
-//        //System.out.println("cluster0.GetSave_Adjusted_Alienation_Number");
-//        double Alien2 = this.cluster0.GetSave_Adjusted_Alienation_Number();
-//        double InEq2 = this.cluster0.GetSave_Inequality();
-//        //System.out.println("cluster0.Get_Min_Alienation");
-//        Min = Math.min(Min, this.cluster0.Get_Min_Alienation());
-//        Max = Math.max(Max, this.cluster0.Get_Max_Alienation());
-//        //System.out.println("cluster0.Colorize");
-//        this.cluster0.Colorize();
-//        System.out.print(" Alien:" + Alien2 + ", InEq:" + InEq2 + ",");
-//        System.out.println();
-//      }
-//    }
-    /* ********************************************************************************* */
     public void Draw_Me(Graphics2D g2d) {
-      DrawingContext dc = new DrawingContext(g2d);
       this.tg.Draw_Me(g2d);
     }
     /* ********************************************************************************* */
@@ -112,12 +86,12 @@ public class MainGui {
       this.repaint();
     }
     /* ********************************************************************************* */
-    public void save() {//http://stackoverflow.com/questions/8202253/saving-a-java-2d-graphics-image-as-png-file
+    public void ScreenGrab() {//http://stackoverflow.com/questions/8202253/saving-a-java-2d-graphics-image-as-png-file
       BufferedImage BImg = new BufferedImage(this.getWidth(), this.getHeight(), BufferedImage.TYPE_INT_RGB);
       Graphics2D cg = BImg.createGraphics();
       this.paintAll(cg);
       try {
-        if (ImageIO.write(BImg, "png", new File("./output_image.png"))) {
+        if (ImageIO.write(BImg, "png", new File("./ScreenGrab.png"))) {
           System.out.println("-- saved");
         }
       } catch (IOException e) {// TODO Auto-generated catch block
@@ -133,7 +107,7 @@ public class MainGui {
     }
     /* ********************************************************************************* */
     @Override public void mouseClicked(MouseEvent me) {
-      this.save();
+      //this.ScreenGrab();
     }
     @Override public void mousePressed(MouseEvent me) {
       this.repaint();
@@ -189,7 +163,7 @@ public class MainGui {
       KeysEnabled = false;// to do: think of a better debouncer
       boolean CtrlPress = ((mod & KeyEvent.CTRL_MASK) != 0);
       if ((keycode == KeyEvent.VK_C) && CtrlPress) {
-        //this.drawpanel.save();
+        //this.drawpanel.ScreenGrab();
 //        this.drawpanel.Save_Pictures();
       } else if (keycode == KeyEvent.VK_DELETE) {
       } else if ((keycode == KeyEvent.VK_Q) && CtrlPress) {
@@ -198,7 +172,7 @@ public class MainGui {
       } else if ((keycode == KeyEvent.VK_X) && CtrlPress) {
       } else if ((keycode == KeyEvent.VK_T) && CtrlPress) {
       } else if ((keycode == KeyEvent.VK_E) && CtrlPress) {
-      } else if ((keycode == KeyEvent.VK_S) && CtrlPress) {// ctrl S means save
+      } else if ((keycode == KeyEvent.VK_S) && CtrlPress) {// ctrl S means ScreenGrab
       } else if ((keycode == KeyEvent.VK_O) && CtrlPress) {// ctrl O means open
       } else if (keycode == KeyEvent.VK_ESCAPE) {
       }
