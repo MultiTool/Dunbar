@@ -27,10 +27,10 @@ public class Farm {
   }
   /* ********************************************************************************* */
   public static Cluster Evolve() {// genalg optimization of random networks
-    int Dunbar_Limit = 3;//4;//5;//4;//3;
+    int Dunbar_Limit = 4;//5;//4;//3;
     int NumNodes = 1 << Dunbar_Limit;
-    NumNodes *= 100;
-    NumNodes = 200;
+    //NumNodes *= 100;
+    //NumNodes = 200;
     return Evolve(NumNodes, Dunbar_Limit);
   }
   /* ********************************************************************************* */
