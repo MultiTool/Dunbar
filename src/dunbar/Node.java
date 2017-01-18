@@ -100,7 +100,7 @@ public class Node implements IDrawable {
     return found;
   }
   /* ********************************************************************************* */
-  public boolean IsOpen() {// inefficent test for connectedness
+  public boolean IsOpen() {// tells whether a node is maxed out on neighbors
     return this.DSLinks.size() < Node.MaxNbrs;// if true, not quite full yet
   }
   /* ********************************************************************************* */
